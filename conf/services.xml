@@ -19,7 +19,14 @@
     <parameter name="fileSuffix">.xml</parameter>
     <parameter name="recordWithNamespaces">FALSE</parameter>
     <parameter name="normalizeChars">TRUE</parameter>
-    <parameter name="includeRecordInResponse">TRUE</parameter>
+
+    <!-- Hans van Eck, OCLC Leiden 2013-11-06
+    The record in the response is currently ignored.
+    There might be a requirement that we use it in the future, but it will likely still be optional.
+    GH:
+    so we can exclude the original record content in response
+    -->
+    <parameter name="includeRecordInResponse">FALSE</parameter>
 
 
 </service>
