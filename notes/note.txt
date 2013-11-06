@@ -1,0 +1,18 @@
+Aufruf des service mit curl
+
+curl -H "Content-Type: text/xml; charset=utf-8" \
+     -H "SOAPAction:" \
+     -d @REQ_254161847.indent.xml \
+     -X POST http://localhost:8080/axis2/services/SRWSearchDocumentsCatcher/update
+
+
+curl -H "Content-Type: text/xml; charset=utf-8" \
+     -H "SOAPAction:" \
+     -d @REQ_254161847.xml \
+     -X POST http://localhost:8080/axis2/services/UpdateService/update
+
+
+     todo
+
+     - bessers Logging (mongo?)
+

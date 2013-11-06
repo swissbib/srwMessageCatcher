@@ -1,0 +1,93 @@
+<project name="SimpleHotelService" basedir="../" default="ErzeugeAAR">
+
+    <property name="src.dir" value="src" />
+    <property name="aar.dir" value="aar" />
+    <property name="bin.dir" value="bin" />
+    <property name="conf.dir" value="conf" />
+
+    <property name="deploy.file" value="SRWSearchDocumentsCatcher.aar" />
+    <property name="deploy.path" value="/home/swissbib/temp/testaxis2" />
+
+    <path id="axisclasspath">
+        <fileset dir="/home/swissbib/Downloads/axis2/axis2-1.6.2.bin/lib">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+
+    <target name="Structure" depends=""
+            description="[AXIS2] Struktur für AAR-File erzeugen">
+
+
+        <delete dir="${aar.dir}" />
+        <delete dir="${bin.dir}" />
+
+        <mkdir dir="${aar.dir}" />
+        <mkdir dir="${aar.dir}/META-INF" />
+        <mkdir dir="${bin.dir}" />
+
+
+        <javac debug="on"
+               fork="true"
+               destdir="${bin.dir}"
+               srcdir="${src.dir}"
+               classpathref="axisclasspath"
+                >
+
+
+        </javac>
+
+        <copy todir="${bin.dir}" preservelastmodified="true">
+
+            <fileset dir="${src.dir}"
+                     includes="**/*.xslt"/>
+
+
+        </copy>
+
+
+        <copy todir="${aar.dir}" preservelastmodified="true">
+
+            <fileset dir="${bin.dir}"
+                     includes="**/*.*"
+                     excludes="*.xml"/>
+
+
+        </copy>
+
+
+        <copy todir="${aar.dir}/META-INF" preservelastmodified="true">
+            <fileset dir="${conf.dir}" includes="services.xml"/>
+
+        </copy>
+
+
+    </target>
+
+
+
+    <target name="ErzeugeAAR" depends="Structure"
+            description="[AXIS2] AAR-File erzeugen">
+        <jar destfile="${deploy.path}/${deploy.file}">
+
+            <fileset dir="${aar.dir}">
+
+                <include name="**/*.*"/>
+            </fileset>
+
+        </jar>
+
+        <copy todir="${deploy.path}" preservelastmodified="true">
+            <fileset dir=".">
+                <include name="*.aar"/>
+            </fileset>
+
+        </copy>
+
+        <delete dir="${aar.dir}" />
+
+
+    </target>
+
+
+</project>

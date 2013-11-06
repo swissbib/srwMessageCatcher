@@ -1,0 +1,25 @@
+<service name="UpdateService" scope="application"
+        class="org.swissbib.srw.SRWUpdateServiceLifecyle"
+        >
+    <description>swissbib SRW search documents record catcher</description>
+
+    <parameter name="ServiceClass">org.swissbib.srw.SRWUpdateService</parameter>
+
+    <operation name="update">
+        <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
+    </operation>
+
+    <parameter name="updateDir">/home/swissbib/temp/testaxis2/updateDir/</parameter>
+    <parameter name="deleteDir">/home/swissbib/temp/testaxis2/deleteDir/</parameter>
+    <!--<parameter name="updateDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/updateDir/</parameter>
+    <parameter name="deleteDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/deleteDir/</parameter>-->
+    <parameter name="deletePattern">srw\/action\/1\/delete</parameter>
+    <parameter name="transformTemplate">org/swissbib/srw/createRecordWithOutNamespaces.xslt</parameter>
+    <parameter name="filePrefix">REQ_</parameter>
+    <parameter name="fileSuffix">.xml</parameter>
+    <parameter name="recordWithNamespaces">TRUE</parameter>
+    <parameter name="normalizeChars">FALSE</parameter>
+    <parameter name="includeRecordInResponse">TRUE</parameter>
+
+
+</service>
