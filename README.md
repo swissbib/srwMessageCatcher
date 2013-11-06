@@ -10,4 +10,5 @@ https://github.com/swissbib/srwMessageCatcher/blob/master/notes/swissbib.service
 as overview
 
 
-
+Because the component uses a standard protocol (SRW) it is open and could be used by any content source - not only the swissbib DataHub but even by sources outside of the core swissbib service.
+The caught messages are then processed in pipelines of the Search Engine document processing component and finally indexed by the Search Engine
