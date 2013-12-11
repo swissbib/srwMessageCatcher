@@ -9,8 +9,8 @@
         <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
     </operation>
 
-    <!--<parameter name="updateDir">/home/swissbib/temp/testaxis2/updateDir/</parameter>
-    <parameter name="deleteDir">/home/swissbib/temp/testaxis2/deleteDir/</parameter> -->
+    <!--<parameter name="updateDir">/home/swissbib/temp/testaxis2/updateDir/</parameter> -->
+    <!--<parameter name="deleteDir">/home/swissbib/temp/testaxis2/deleteDir/</parameter> -->
     <parameter name="updateDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/updateDir/</parameter>
     <parameter name="deleteDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/deleteDir/</parameter>
     <parameter name="deletePattern">srw\/action\/1\/delete</parameter>
@@ -19,6 +19,10 @@
     <parameter name="fileSuffix">.xml</parameter>
     <parameter name="recordWithNamespaces">FALSE</parameter>
     <parameter name="normalizeChars">TRUE</parameter>
+    <parameter name="logMessages">TRUE</parameter>
+    <parameter name="MONGO.CLIENT">[host]###[port]</parameter>
+    <parameter name="MONGO.AUTHENTICATION">[auth-db]###[user]###[password]</parameter>
+    <parameter name="MONGO.DB">[logging DB]###[collection]</parameter>
 
     <!-- Hans van Eck, OCLC Leiden 2013-11-06
     The record in the response is currently ignored.
@@ -26,7 +30,7 @@
     GH:
     so we can exclude the original record content in response
     -->
-    <parameter name="includeRecordInResponse">FALSE</parameter>
+    <parameter name="includeRecordInResponse">TRUE</parameter>
 
 
 </service>

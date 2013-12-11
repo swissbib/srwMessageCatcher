@@ -1,5 +1,7 @@
 package org.swissbib.srw;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
 import org.apache.axiom.om.*;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.description.Parameter;
@@ -9,6 +11,8 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import java.io.*;
 import java.text.Normalizer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 /**
@@ -58,6 +62,7 @@ public class SRWUpdateService {
 
         try {
 
+            final String LOG_MESSAGES  = "logMessages";
 
             OMElement actionEl = record.getFirstChildWithName(new QName(nsURIupdReq,"action"));
             OMElement idEl = record.getFirstChildWithName(new QName(nsURIupdReq,"recordIdentifier"));
@@ -82,6 +87,9 @@ public class SRWUpdateService {
 
                     serializeRecord(actionText,idText,completeRecordOmElement);
                     responseElement = createResponse(idText, packaging,schema, completeRecordOmElement);
+
+                    logMessages(idText,actionText);
+
 
                 }
             }
@@ -212,6 +220,54 @@ public class SRWUpdateService {
 
         bw.flush();
         bw.close();
+
+    }
+
+
+    private void  logMessages (String messageID, String actionText) {
+
+        final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
+        final String LOG_MESSAGES  = "logMessages";
+
+        try {
+            MessageContext mc =  MessageContext.getCurrentMessageContext();
+            String test = mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString();
+            if ( Boolean.valueOf (mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString())) {
+
+                DBCollection mongoCollection = (DBCollection) mc.getAxisService().getParameter(ACTIVE_MONGO_COLLECTION).getValue();
+
+                //SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
+                SimpleDateFormat simpleFormatDay = new SimpleDateFormat("yyyy-MM-dd");
+                //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss");
+                SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+
+                Date currentDate = new Date();
+
+                // yyyy-mm-dd hh:mm:ss.fffffffff
+
+                //String td = simpleFormatDay.format(currentDate);
+                //String tmE = exactHumanReadbleTime.format(currentDate);
+
+                //long currentTimestamp = currentDate.getTime();
+
+                BasicDBObject doc = new BasicDBObject("id", messageID).
+                        append("action", actionText).
+                        append("updateDay", simpleFormatDay.format(currentDate)).
+                        append("timestamp", currentDate.getTime()).
+                        append("readTime", exactHumanReadbleTime.format(currentDate));
+
+                mongoCollection.insert(doc);
+
+
+            }
+        } catch (Throwable thr) {
+            System.out.println("Exception  trying to write log message into Mongo DB for id: " + messageID + " action: " + actionText);
+            System.out.print(thr.getMessage());
+        }
+
+
+
+
 
     }
 

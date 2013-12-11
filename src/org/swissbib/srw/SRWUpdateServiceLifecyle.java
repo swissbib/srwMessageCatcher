@@ -1,5 +1,8 @@
 package org.swissbib.srw;
 
+import com.mongodb.DB;
+import com.mongodb.DBCollection;
+import com.mongodb.MongoClient;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.description.AxisService;
@@ -11,6 +14,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
+import java.net.UnknownHostException;
 import java.util.regex.Pattern;
 
 /**
@@ -45,6 +49,11 @@ import java.util.regex.Pattern;
 public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
 
+//debug Axis2
+//http://amilamanoj.blogspot.ch/2011/09/running-debugging-apache-axis2-inside.html
+//http://shameerarathnayaka.blogspot.ch/2011/09/remote-debugging-apache-axis2-with.html
+//http://insightforfuture.blogspot.ch/2012/05/what-is-remote-debugging-java.html
+
 
 
 
@@ -62,6 +71,13 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String RECORD_NS = "recordWithNamespaces";
         final String NORMALIZE_CHARS = "normalizeChars";
         final String RECORD_IN_RESPONSE  = "includeRecordInResponse";
+
+        final String LOG_MESSAGES  = "logMessages";
+        final String MONGO_CLIENT  = "MONGO.CLIENT";
+        final String MONGO_AUTHENTICATION  = "MONGO.AUTHENTICATION";
+        final String MONGO_DB  = "MONGO.DB";
+        final String ACTIVE_MONGO_CLIENT = "activeMongoClient";
+        final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
 
 
 
@@ -107,6 +123,68 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
             Templates recordTransformer = transformerFactory.newTemplates(source);
 
             axisService.addParameter(new Parameter(TRANSFORM_TEMPLATE,recordTransformer));
+
+            //logging of messages?
+            Parameter logging = axisService.getParameter(LOG_MESSAGES);
+
+            boolean logActive =   Boolean.valueOf(logging.getValue().toString());
+            if (logActive) {
+
+                try {
+
+                    String[] mongoClient = ((String)axisService.getParameter(MONGO_CLIENT).getValue()).split("###");
+                    String[] mongoAuthentication = ((String)axisService.getParameter(MONGO_AUTHENTICATION).getValue()).split("###");
+                    String[] mongoDB = ((String)axisService.getParameter(MONGO_DB).getValue()).split("###");
+
+
+
+                    System.out.println("mongoClient: " + mongoClient[0]);
+                    System.out.println("mongoPort: " + mongoClient[1]);
+
+                    MongoClient  mClient = new MongoClient( mongoClient[0],Integer.valueOf(mongoClient[1]));
+
+                    DB adminDB =  mClient.getDB(mongoAuthentication[0]);
+                    System.out.println("mongoAuthentication: " + mongoAuthentication[0]);
+
+                    //System.out.println("credential1: " + mongoAuthentication[1]);
+                    //System.out.println("credential2: " + mongoAuthentication[2]);
+
+
+                    boolean authenticated = adminDB.authenticate(mongoAuthentication[1],mongoAuthentication[2].toCharArray());
+                    if (authenticated) {
+
+                        System.out.println("authenticated");
+
+                        DB messageDB = mClient.getDB(mongoDB[0]);
+                        DBCollection messageCollection = messageDB.getCollection(mongoDB[1]);
+
+                        axisService.addParameter(new Parameter(ACTIVE_MONGO_COLLECTION,messageCollection));
+
+
+                        axisService.addParameter(new Parameter(LOG_MESSAGES,"true"));
+
+
+
+                    } else {
+                        System.out.println("not authenticated");
+                        throw new Exception("authentication against Mongo database wasn't possible - message logging isn't possible");
+
+                    }
+                } catch   (UnknownHostException uhExc) {
+                    axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
+                    uhExc.printStackTrace();
+
+                } catch (Exception exc) {
+
+                    axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
+                    exc.printStackTrace();
+                }
+
+
+
+
+            }
+
 
 
 

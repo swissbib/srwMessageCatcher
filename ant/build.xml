@@ -4,12 +4,16 @@
     <property name="aar.dir" value="aar" />
     <property name="bin.dir" value="bin" />
     <property name="conf.dir" value="conf" />
+    <property name="custom.libs" value="customLibs" />
 
     <property name="deploy.file" value="SRWSearchDocumentsCatcher.aar" />
     <property name="deploy.path" value="/home/swissbib/temp/testaxis2" />
 
     <path id="axisclasspath">
         <fileset dir="/home/swissbib/Downloads/axis2/axis2-1.6.2.bin/lib">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="customLibs/lib">
             <include name="*.jar"/>
         </fileset>
     </path>
@@ -41,6 +45,8 @@
 
             <fileset dir="${src.dir}"
                      includes="**/*.xslt"/>
+            <fileset dir="${custom.libs}"
+                     includes="**/*"/>
 
 
         </copy>
