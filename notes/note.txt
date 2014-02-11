@@ -11,6 +11,17 @@ curl -H "Content-Type: text/xml; charset=utf-8" \
      -d @REQ_254161847.xml \
      -X POST http://localhost:8080/axis2/services/UpdateService/update
 
+curl -H "Content-Type: text/xml; charset=utf-8" \
+     -H "SOAPAction:" \
+     -d @REQ_038434628.xml \
+     -X POST http://sb-s1.swissbib.unibas.ch:8080/axis2/services/UpdateService/update
+
+curl -H "Content-Type: text/xml; charset=utf-8" \
+     -H "SOAPAction:" \
+     -d @REQ_094319723.xml \
+     -X POST http://sb-s1.swissbib.unibas.ch:8080/axis2/services/UpdateService/update
+
+
 
      todo
 
