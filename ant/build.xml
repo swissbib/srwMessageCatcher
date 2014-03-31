@@ -26,12 +26,14 @@
         <delete dir="${aar.dir}" />
         <delete dir="${bin.dir}" />
 
-        <mkdir dir="${aar.dir}" />
+       <mkdir dir="${aar.dir}" />
         <mkdir dir="${aar.dir}/META-INF" />
         <mkdir dir="${bin.dir}" />
 
 
         <javac debug="on"
+               target="1.7"
+               source="1.7"
                fork="true"
                destdir="${bin.dir}"
                srcdir="${src.dir}"

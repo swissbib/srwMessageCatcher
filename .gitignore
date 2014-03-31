@@ -1,0 +1,6 @@
+!.gitignore
+.idea
+customLibs
+
+conf/services.passwords.xml
+bin
