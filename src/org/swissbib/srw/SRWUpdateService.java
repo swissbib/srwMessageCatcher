@@ -84,11 +84,15 @@ public class SRWUpdateService {
                 if (null != srwRecordData) {
 
                     OMElement completeRecordOmElement= srwRecordData.getFirstChildWithName(new QName(nsURImxSLIM, "record"));
+                    OMElement leaderOME =  completeRecordOmElement.getFirstChildWithName(new QName(nsURImxSLIM,"leader"));
+
+
+                    String leaderChar = leaderOME != null ? leaderOME.getText().substring(5,6): "";
 
                     serializeRecord(actionText,idText,completeRecordOmElement);
                     responseElement = createResponse(idText, packaging,schema, completeRecordOmElement);
 
-                    logMessages(idText,actionText);
+                    logMessages(idText,actionText, leaderChar);
 
 
                 }
@@ -224,10 +228,11 @@ public class SRWUpdateService {
     }
 
 
-    private void  logMessages (String messageID, String actionText) {
+    private void  logMessages (String messageID, String actionText, String leaderCharPos6) {
 
         final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
         final String LOG_MESSAGES  = "logMessages";
+
 
         try {
             MessageContext mc =  MessageContext.getCurrentMessageContext();
@@ -253,6 +258,7 @@ public class SRWUpdateService {
                 BasicDBObject doc = new BasicDBObject("id", messageID).
                         append("action", actionText).
                         append("updateDay", simpleFormatDay.format(currentDate)).
+                        append("marcStatus", leaderCharPos6).
                         append("timestamp", currentDate.getTime()).
                         append("readTime", exactHumanReadbleTime.format(currentDate));
 
