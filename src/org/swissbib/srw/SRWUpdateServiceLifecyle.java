@@ -183,6 +183,8 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
 
 
+            } else {
+                axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
             }
 
 

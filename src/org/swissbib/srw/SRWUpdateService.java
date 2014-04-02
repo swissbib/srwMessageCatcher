@@ -236,7 +236,7 @@ public class SRWUpdateService {
 
         try {
             MessageContext mc =  MessageContext.getCurrentMessageContext();
-            String test = mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString();
+            //String test = mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString();
             if ( Boolean.valueOf (mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString())) {
 
                 DBCollection mongoCollection = (DBCollection) mc.getAxisService().getParameter(ACTIVE_MONGO_COLLECTION).getValue();
