@@ -182,7 +182,12 @@ public class SRWUpdateService {
             outputDir = mc.getAxisService().getParameter(UPD_DIR).getValue().toString();
         }
 
-        File recordFile =  new File(outputDir +
+        SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
+        //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        Date currentDate = new Date();
+        String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
+
+        File recordFile =  new File(outputDir + timeFilePrefix + "_" +
                 mc.getAxisService().getParameter(FILE_PREFIX).getValue().toString() +
                 recordID +
                 mc.getAxisService().getParameter(FILE_SUFFIX).getValue().toString());
