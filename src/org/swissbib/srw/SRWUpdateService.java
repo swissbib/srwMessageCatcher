@@ -49,6 +49,7 @@ import java.util.regex.Pattern;
 public class SRWUpdateService {
 
 
+    private final String DEL_PATTERN = "deletePattern";
 
 
     public OMElement update (OMElement record) {
@@ -89,7 +90,7 @@ public class SRWUpdateService {
 
                     String leaderChar = leaderOME != null ? leaderOME.getText().substring(5,6): "";
 
-                    serializeRecord(actionText,idText,completeRecordOmElement);
+                    serializeRecord(actionText,idText,completeRecordOmElement,leaderChar);
                     responseElement = createResponse(idText, packaging,schema, completeRecordOmElement);
 
                     logMessages(idText,actionText, leaderChar);
@@ -156,11 +157,11 @@ public class SRWUpdateService {
     }
 
 
-    private void serializeRecord (String actionType, String recordID, OMElement completeRecord ) throws Exception {
+    private void serializeRecord (String actionType, String recordID, OMElement completeRecord, String leaderCharFiveOne ) throws Exception {
 
         final  String UPD_DIR = "updateDir";
         final String  DEL_DIR  = "deleteDir";
-        final String DEL_PATTERN = "deletePattern";
+        //final String DEL_PATTERN = "deletePattern";
         final String TRANSFORM_TEMPLATE = "transformTemplate";
         final String FILE_PREFIX = "filePrefix";
         final String FILE_SUFFIX = "fileSuffix";
@@ -175,7 +176,7 @@ public class SRWUpdateService {
         String outputDir = null;
 
         Pattern p =     (Pattern) delPattern.getValue();
-        if (p.matcher(actionType).find())  {
+        if (p.matcher(actionType).find() || leaderCharFiveOne.equals("d"))  {
 
             outputDir = mc.getAxisService().getParameter(DEL_DIR).getValue().toString();
         } else {
@@ -259,6 +260,21 @@ public class SRWUpdateService {
                 //String tmE = exactHumanReadbleTime.format(currentDate);
 
                 //long currentTimestamp = currentDate.getTime();
+
+                Parameter delPattern = mc.getAxisService().getParameter(DEL_PATTERN);
+
+                Pattern p =  (Pattern) delPattern.getValue();
+
+                /*
+                actually we see the problem that our data-hub sends SRU messages containing a create or replace
+                SRU message although the record is indicated as deleted in the leader tag.
+                These records are going to be deleted on the SearchIndex (look at serializeRecord method) and the original action text is extended
+                to mark such cases in the logs
+                */
+                if (leaderCharPos6.equals("d") && ! p.matcher(actionText).find()) {
+                    actionText = actionText + ":sbdelete";
+                }
+
 
                 BasicDBObject doc = new BasicDBObject("id", messageID).
                         append("action", actionText).
