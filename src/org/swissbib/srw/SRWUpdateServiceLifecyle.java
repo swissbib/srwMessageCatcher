@@ -1,8 +1,6 @@
 package org.swissbib.srw;
 
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.MongoClient;
+import com.mongodb.*;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.description.AxisService;
@@ -15,6 +13,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 /**
@@ -132,44 +131,50 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
                 try {
 
+                    //it is expected:
+                    // <parameter name="MONGO.CLIENT">[host]###[port]</parameter>
                     String[] mongoClient = ((String)axisService.getParameter(MONGO_CLIENT).getValue()).split("###");
+
+                    //Todo: right now I expect the Mongo storage is running in secure mode
+                    //if not the procedure to connect is a little bit different
+                    //take a look at GND and DSV11 Plugin in content2SearchDoc repository. Configuration for messageCatcher should be adapted
+
+                    //it is expected that mongoAuthentication contains the values for:
+                    //<parameter name="MONGO.AUTHENTICATION">[auth-db]###[user]###[password]</parameter>
                     String[] mongoAuthentication = ((String)axisService.getParameter(MONGO_AUTHENTICATION).getValue()).split("###");
+                    //it is expected:
+                    //<parameter name="MONGO.DB">[logging DB]###[collection]</parameter>
                     String[] mongoDB = ((String)axisService.getParameter(MONGO_DB).getValue()).split("###");
 
-
-
-                    System.out.println("mongoClient: " + mongoClient[0]);
+                    System.out.println("mongoHost: " + mongoClient[0]);
                     System.out.println("mongoPort: " + mongoClient[1]);
 
-                    MongoClient  mClient = new MongoClient( mongoClient[0],Integer.valueOf(mongoClient[1]));
+                    ServerAddress server = new ServerAddress(mongoClient[0], Integer.valueOf(mongoClient[1]));
 
-                    DB adminDB =  mClient.getDB(mongoAuthentication[0]);
-                    System.out.println("mongoAuthentication: " + mongoAuthentication[0]);
-
-                    //System.out.println("credential1: " + mongoAuthentication[1]);
-                    //System.out.println("credential2: " + mongoAuthentication[2]);
+                    MongoCredential credential = MongoCredential.createMongoCRCredential(mongoAuthentication[1], mongoAuthentication[0], mongoAuthentication[2].toCharArray());
+                    MongoClient mClient = new MongoClient(server, Arrays.asList(credential));
+                    DB db =  mClient.getDB(mongoAuthentication[0]);
 
 
-                    boolean authenticated = adminDB.authenticate(mongoAuthentication[1],mongoAuthentication[2].toCharArray());
-                    if (authenticated) {
+                    //simple test if authentication was successfull
+                    CommandResult cR = db.getStats();
+
+                    if (cR != null && cR.ok()) {
 
                         System.out.println("authenticated");
-
+                        //mongoDB contains the application DB and collection within this DB
                         DB messageDB = mClient.getDB(mongoDB[0]);
                         DBCollection messageCollection = messageDB.getCollection(mongoDB[1]);
-
                         axisService.addParameter(new Parameter(ACTIVE_MONGO_COLLECTION,messageCollection));
-
-
                         axisService.addParameter(new Parameter(LOG_MESSAGES,"true"));
 
-
-
                     } else {
+
                         System.out.println("not authenticated");
                         throw new Exception("authentication against Mongo database wasn't possible - message logging isn't possible");
-
                     }
+
+
                 } catch   (UnknownHostException uhExc) {
                     axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
                     uhExc.printStackTrace();

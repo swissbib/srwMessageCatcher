@@ -19,7 +19,7 @@
     <parameter name="fileSuffix">.xml</parameter>
     <parameter name="recordWithNamespaces">FALSE</parameter>
     <parameter name="normalizeChars">TRUE</parameter>
-    <parameter name="logMessages">TRUE</parameter>
+    <parameter name="logMessages">FALSE</parameter>
     <parameter name="MONGO.CLIENT">[host]###[port]</parameter>
     <parameter name="MONGO.AUTHENTICATION">[auth-db]###[user]###[password]</parameter>
     <parameter name="MONGO.DB">[logging DB]###[collection]</parameter>
