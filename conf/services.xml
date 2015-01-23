@@ -7,7 +7,7 @@
 
     <operation name="update">
         <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
-    </operation>git add 
+    </operation>git add
 
     <parameter name="updateDir">[path to store the replace and create messages]</parameter>
     <parameter name="deleteDir">[path to store the delete messages]</parameter>
