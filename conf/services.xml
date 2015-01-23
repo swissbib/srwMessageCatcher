@@ -1,5 +1,5 @@
 <service name="UpdateService" scope="application"
-        class="org.swissbib.srw.SRWUpdateServiceLifecyle"
+         class="org.swissbib.srw.SRWUpdateServiceLifecyle"
         >
     <description>swissbib SRW search documents record catcher</description>
 
@@ -7,22 +7,33 @@
 
     <operation name="update">
         <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
-    </operation>
+    </operation>git add 
 
-    <!--<parameter name="updateDir">/home/swissbib/temp/testaxis2/updateDir/</parameter> -->
-    <!--<parameter name="deleteDir">/home/swissbib/temp/testaxis2/deleteDir/</parameter> -->
-    <parameter name="updateDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/updateDir/</parameter>
-    <parameter name="deleteDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/deleteDir/</parameter>
-    <parameter name="deletePattern">srw\/action\/1\/delete</parameter>
+    <parameter name="updateDir">[path to store the replace and create messages]</parameter>
+    <parameter name="deleteDir">[path to store the delete messages]</parameter>
     <parameter name="transformTemplate">org/swissbib/srw/createRecordWithOutNamespaces.xslt</parameter>
     <parameter name="filePrefix">REQ_</parameter>
     <parameter name="fileSuffix">.xml</parameter>
     <parameter name="recordWithNamespaces">FALSE</parameter>
     <parameter name="normalizeChars">TRUE</parameter>
     <parameter name="logMessages">FALSE</parameter>
-    <parameter name="MONGO.CLIENT">[host]###[port]</parameter>
-    <parameter name="MONGO.AUTHENTICATION">[auth-db]###[user]###[password]</parameter>
-    <parameter name="MONGO.DB">[logging DB]###[collection]</parameter>
+    <parameter name="checkLeaderForDelete">FALSE</parameter>
+
+    <parameter name="MONGO.CLIENT">[mongo hostname]###[mongo port]</parameter>
+
+    <!-- <parameter name="MONGO.CLIENT">localhost###29017</parameter> -->
+    <parameter name="MONGO.AUTHENTICATION">[authentication db]###[user]###[pasword]</parameter>
+    <!--<parameter name="MONGO.DB">srwMessageLogging###sourceBB</parameter> -->
+    <parameter name="MONGO.DB">[mongo db]###[collection]</parameter>
+
+    <!--
+    or empty tags if no mongo logging
+    <parameter name="MONGO.CLIENT"/>
+
+    <parameter name="MONGO.AUTHENTICATION"/
+    <parameter name="MONGO.DB"/>
+
+    -->
 
     <!-- Hans van Eck, OCLC Leiden 2013-11-06
     The record in the response is currently ignored.

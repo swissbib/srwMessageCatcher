@@ -1,0 +1,165 @@
+<?xml version='1.0' encoding='utf-8'?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <soapenv:Body>
+        <ns4:updateResponse xmlns:ns4="http://www.loc.gov/zing/srw/update/"
+            xmlns:ns3="http://www.loc.gov/zing/srw/diagnostic/"
+            xmlns:ns5="http://www.loc.gov/zing/srw/">
+            <ns5:version>1.0</ns5:version>
+            <ns5:operationStatus>success</ns5:operationStatus>
+            <ns5:recordIdentifier>121819086</ns5:recordIdentifier>
+            <xsi:recordVersions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <ns5:record>
+                <ns5:recordSchema>info:srw/schema/1/marcxml-v1.1</ns5:recordSchema>
+                <ns5:recordPacking>xml</ns5:recordPacking>
+                <ns5:recordData>
+                    <mx:record xmlns:mx="http://www.loc.gov/MARC21/slim">
+                        <mx:leader> cam a22 4 4500</mx:leader>
+                        <mx:controlfield tag="001">121819086</mx:controlfield>
+                        <mx:controlfield tag="003">CHVBK</mx:controlfield>
+                        <mx:controlfield tag="005">20150105055952.0</mx:controlfield>
+                        <mx:controlfield tag="008">050628s2005 gw 00 ger|d</mx:controlfield>
+                        <mx:datafield tag="015" ind1=" " ind2=" ">
+                            <mx:subfield code="a">GFR-DNB-05,N29,0434</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="016" ind1="7" ind2=" ">
+                            <mx:subfield code="a">975472496</mx:subfield>
+                            <mx:subfield code="2">GyFmDB</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="020" ind1=" " ind2=" ">
+                            <mx:subfield code="a">3-86573-093-0</mx:subfield>
+                            <mx:subfield code="c">Pb. : EUR 17.90</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="035" ind1=" " ind2=" ">
+                            <mx:subfield code="a">(OCoLC)254645813</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="035" ind1=" " ind2=" ">
+                            <mx:subfield code="a">(IDSBB)003670324</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="040" ind1=" " ind2=" ">
+                            <mx:subfield code="a">DDB</mx:subfield>
+                            <mx:subfield code="d">SzZuIDS BS/BE A100</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="082" ind1="0" ind2=" ">
+                            <mx:subfield code="a">330</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="084" ind1=" " ind2=" ">
+                            <mx:subfield code="a">QT 000</mx:subfield>
+                            <mx:subfield code="2">rvk</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="100" ind1="1" ind2=" ">
+                            <mx:subfield code="a">Muñoz-Perez</mx:subfield>
+                            <mx:subfield code="D">Bruno</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="245" ind1="1" ind2="0">
+                            <mx:subfield code="a">Problematik eines prognostizierten globalen
+                                Klimawandels aus Sicht der Entwicklungsländer am Beispiel
+                                Ghana</mx:subfield>
+                            <mx:subfield code="c">Bruno Muñoz-Perez</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="260" ind1=" " ind2=" ">
+                            <mx:subfield code="a">Berlin</mx:subfield>
+                            <mx:subfield code="b">wvb</mx:subfield>
+                            <mx:subfield code="c">2005</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="300" ind1=" " ind2=" ">
+                            <mx:subfield code="a">112 S</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="490" ind1="0" ind2=" ">
+                            <mx:subfield code="a">Fremde Nähe (Wissenschaftlicher Verlag
+                                Berlin)</mx:subfield>
+                            <mx:subfield code="v">Bd. 4</mx:subfield>
+                            <mx:subfield code="i">4</mx:subfield>
+                            <mx:subfield code="w">(IDSBB)004170063</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="650" ind1=" " ind2="7">
+                            <mx:subfield code="a">Klimawandel</mx:subfield>
+                            <mx:subfield code="x">Entwicklungsländer</mx:subfield>
+                            <mx:subfield code="2">idsbb</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="650" ind1=" " ind2="7">
+                            <mx:subfield code="a">Klimawandel</mx:subfield>
+                            <mx:subfield code="z">Ghana</mx:subfield>
+                            <mx:subfield code="2">idsbb</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="650" ind1=" " ind2="7">
+                            <mx:subfield code="a">Anthropogene Klimaänderung</mx:subfield>
+                            <mx:subfield code="0">(DE-588)4290733-0</mx:subfield>
+                            <mx:subfield code="2">gnd</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="650" ind1=" " ind2="7">
+                            <mx:subfield code="a">Auswirkung</mx:subfield>
+                            <mx:subfield code="0">(DE-588)4112646-4</mx:subfield>
+                            <mx:subfield code="2">gnd</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="650" ind1=" " ind2="7">
+                            <mx:subfield code="a">Klima</mx:subfield>
+                            <mx:subfield code="0">(DE-588)4031170-3</mx:subfield>
+                            <mx:subfield code="2">gnd</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="650" ind1=" " ind2="7">
+                            <mx:subfield code="a">Umweltpolitik</mx:subfield>
+                            <mx:subfield code="0">(DE-588)4078523-3</mx:subfield>
+                            <mx:subfield code="2">gnd</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="651" ind1=" " ind2="7">
+                            <mx:subfield code="a">Ghana</mx:subfield>
+                            <mx:subfield code="0">(DE-588)4020949-0</mx:subfield>
+                            <mx:subfield code="2">gnd</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="898" ind1=" " ind2=" ">
+                            <mx:subfield code="a">BK020000</mx:subfield>
+                            <mx:subfield code="b">XK020000</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="909" ind1=" " ind2="7">
+                            <mx:subfield code="f">afbs-mono</mx:subfield>
+                            <mx:subfield code="2">idsbb A</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="912" ind1=" " ind2="7">
+                            <mx:subfield code="a">af</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="912" ind1=" " ind2="7">
+                            <mx:subfield code="a">gg</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="949" ind1=" " ind2=" ">
+                            <mx:subfield code="B">IDSBB</mx:subfield>
+                            <mx:subfield code="C">DSV51</mx:subfield>
+                            <mx:subfield code="D">DSV01</mx:subfield>
+                            <mx:subfield code="E">003670324</mx:subfield>
+                            <mx:subfield code="F">A100</mx:subfield>
+                            <mx:subfield code="b">A100</mx:subfield>
+                            <mx:subfield code="c">100FM</mx:subfield>
+                            <mx:subfield code="j">Ez 6500</mx:subfield>
+                            <mx:subfield code="p">A1001379792</mx:subfield>
+                            <mx:subfield code="q">003670325</mx:subfield>
+                            <mx:subfield code="r">000010</mx:subfield>
+                            <mx:subfield code="x">NELA1000511</mx:subfield>
+                            <mx:subfield code="0">Basel UB</mx:subfield>
+                            <mx:subfield code="1">Freihandmagazin</mx:subfield>
+                            <mx:subfield code="2">i</mx:subfield>
+                            <mx:subfield code="3">BOOK</mx:subfield>
+                            <mx:subfield code="4">11</mx:subfield>
+                            <mx:subfield code="5">Heimausleihe</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="950" ind1=" " ind2=" ">
+                            <mx:subfield code="B">IDSBB</mx:subfield>
+                            <mx:subfield code="P">100</mx:subfield>
+                            <mx:subfield code="E">1-</mx:subfield>
+                            <mx:subfield code="a">Muñoz-Perez</mx:subfield>
+                            <mx:subfield code="D">Bruno</mx:subfield>
+                        </mx:datafield>
+                        <mx:datafield tag="950" ind1=" " ind2=" ">
+                            <mx:subfield code="B">IDSBB</mx:subfield>
+                            <mx:subfield code="P">490</mx:subfield>
+                            <mx:subfield code="E">--</mx:subfield>
+                            <mx:subfield code="a">Fremde Nähe (Wissenschaftlicher Verlag
+                                Berlin)</mx:subfield>
+                            <mx:subfield code="v">Bd. 4</mx:subfield>
+                            <mx:subfield code="i">4</mx:subfield>
+                            <mx:subfield code="w">(IDSBB)004170063</mx:subfield>
+                        </mx:datafield>
+                    </mx:record>
+                </ns5:recordData>
+            </ns5:record>
+        </ns4:updateResponse>
+    </soapenv:Body>
+</soapenv:Envelope>

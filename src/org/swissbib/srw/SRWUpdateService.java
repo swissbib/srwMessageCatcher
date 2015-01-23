@@ -49,55 +49,116 @@ import java.util.regex.Pattern;
 public class SRWUpdateService {
 
 
-    private final String DEL_PATTERN = "deletePattern";
+
+    private enum SRUActions {
+        delete("srw/action/1/delete"),
+        replace("rw/action/1/replace"),
+        create("rw/action/1/create");
+
+        String action;
+        SRUActions(String action) {
+            this.action = action;
+        }
+        public String getValue() {
+            return this.action;
+        }
+
+    }
+
+
+    private enum ResponseRecordMetaInfo {
+        packaging("xml"),
+        recordSchema("info:srw/schema/1/marcxml-v1.1");
+
+        String metaInfo;
+        ResponseRecordMetaInfo(String info) {
+            this.metaInfo = info;
+        }
+
+        public String getValue() {
+            return this.metaInfo;
+        }
+    }
+
+
+    private enum SRUNamespaces {
+        marc21Slim("http://www.loc.gov/MARC21/slim"),
+        diagnostic("http://www.loc.gov/zing/srw/diagnostic/"), //prefix -> ns3
+        zingSRWupdate("http://www.loc.gov/zing/srw/update/"), //prefix -> ns4
+        xmlSchemaInstance("http://www.w3.org/2001/XMLSchema-instance"), //prefix -> xsi
+        zingSRW("http://www.loc.gov/zing/srw/"); //prefix -> ns5
+
+
+        String namespace;
+        SRUNamespaces(String ns) {
+            this.namespace = ns;
+        }
+
+        public String getValue() {
+            return this.namespace;
+        }
+    }
+
+
 
 
     public OMElement update (OMElement record) {
 
-        final String nsURIupdReq = "http://www.loc.gov/zing/srw/update/";
-        final String nsURImxSLIM = "http://www.loc.gov/MARC21/slim";
-        final String nsURIsrw = "http://www.loc.gov/zing/srw/";
 
+        final String CHECK_LEADER_FOR_DELETE = "checkLeaderForDelete";
 
         OMElement responseElement = null;
 
         try {
 
-            final String LOG_MESSAGES  = "logMessages";
 
-            OMElement actionEl = record.getFirstChildWithName(new QName(nsURIupdReq,"action"));
-            OMElement idEl = record.getFirstChildWithName(new QName(nsURIupdReq,"recordIdentifier"));
+            String idText = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRWupdate.getValue(),"recordIdentifier")).getText();
+            String actionText = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRWupdate.getValue(),"action")).getText();
 
-            String idText = idEl.getText();
-            String actionText = actionEl.getText();
+            Pattern pDeleteAction =     Pattern.compile(SRUActions.delete.getValue(),Pattern.CASE_INSENSITIVE);
 
+            if (pDeleteAction.matcher(actionText).find())  {
+                //Todo: seraialize Delete record
+                serializeDeleteRecord(idText,record);
+                responseElement =  createDeleteResponse(idText);
+            } else {
 
-            OMElement srwRecord = record.getFirstChildWithName(new QName(nsURIsrw,"record"));
-            if (null != srwRecord) {
-                OMElement srwRecordData = srwRecord.getFirstChildWithName(new QName(nsURIsrw,"recordData"));
-                OMElement packagingOmElement= srwRecord.getFirstChildWithName(new QName(nsURIsrw,"recordPacking"));
-                OMElement schemaOmElement= srwRecord.getFirstChildWithName(new QName(nsURIsrw,"recordSchema"));
+                OMElement srwRecord = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRW.getValue(),"record"));
+                if (null != srwRecord) {
+                    OMElement srwRecordData = srwRecord.getFirstChildWithName(new QName(SRUNamespaces.zingSRW.getValue(),"recordData"));
 
-                String packaging = packagingOmElement.getText();
-                String schema = schemaOmElement.getText();
-
-
-                if (null != srwRecordData) {
-
-                    OMElement completeRecordOmElement= srwRecordData.getFirstChildWithName(new QName(nsURImxSLIM, "record"));
-                    OMElement leaderOME =  completeRecordOmElement.getFirstChildWithName(new QName(nsURImxSLIM,"leader"));
+                    if (null != srwRecordData) {
+                        OMElement completeRecordOmElement= srwRecordData.getFirstChildWithName(new QName(SRUNamespaces.marc21Slim.getValue(), "record"));
 
 
-                    String leaderChar = leaderOME != null ? leaderOME.getText().substring(5,6): "";
+                        if (null != completeRecordOmElement) {
+                            MessageContext mc =  MessageContext.getCurrentMessageContext();
+                            if ( Boolean.valueOf( mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString()) && checkLeaderForDelete(completeRecordOmElement)) {
+                                //Todo: write log
+                                serializeDeleteRecord(idText,record);
+                                responseElement =  createDeleteResponse(idText);
+                            } else {
+                                serializeRecord(idText,completeRecordOmElement);
+                                responseElement = createUpdateReplaceResponse(idText, completeRecordOmElement);
 
-                    serializeRecord(actionText,idText,completeRecordOmElement,leaderChar);
-                    responseElement = createResponse(idText, packaging,schema, completeRecordOmElement);
+                                //Todo change signature for logMessages
+                                logMessages(idText,actionText);
 
-                    logMessages(idText,actionText, leaderChar);
+                            }
+                        } else {
+
+                            responseElement = createFailureResponse(idText,"replace or create message without complete record element","info:srw/diagnostic/12/1");
+                        }
+
+
+                    } else {
+                        responseElement = createFailureResponse(idText,"replace or create message without record data","info:srw/diagnostic/12/1");
+                    }
 
 
                 }
             }
+
         } catch (Exception except) {
 
             except.printStackTrace();
@@ -110,28 +171,32 @@ public class SRWUpdateService {
 
     }
 
+    private boolean checkLeaderForDelete(OMElement completeRecordOmElement) {
+
+        //OMElement leaderOME =  completeRecordOmElement.getFirstChildWithName(new QName(nsURImxSLIM,"leader"));
+        //String leaderChar = leaderOME != null ? leaderOME.getText().substring(5,6): "";
+        //Todo: implement this method
+        return false;
+    }
 
     /**
      *
      * @param identifier of the record
-     * @param packaging  most of the cases xml
-     * @param schema  most of the cases info:srw/schema/1/marcxml-v1.1
      * @param completeRecord content of the SRW request
      * @return    content of the SOAP message (child tag of soapenv:Body)
      */
-    private OMElement createResponse (String identifier, String packaging, String schema, OMNode completeRecord) {
+    private OMElement createUpdateReplaceResponse (String identifier, OMNode completeRecord) {
 
         final String RECORD_IN_RESPONSE  = "includeRecordInResponse";
-
 
         //method creates the content which is sent back to the client and child of soapenv:Body tag
 
         OMFactory fac = OMAbstractFactory.getOMFactory();
 
-        OMNamespace nsUpdate = fac.createOMNamespace( "http://www.loc.gov/zing/srw/update/","ns4");
-        OMNamespace nsDiagnostic = fac.createOMNamespace("http://www.loc.gov/zing/srw/diagnostic/","ns3");
-        OMNamespace nsSRW = fac.createOMNamespace("http://www.loc.gov/zing/srw/","ns5");
-        OMNamespace nsXSI = fac.createOMNamespace("http://www.w3.org/2001/XMLSchema-instance","xsi");
+        OMNamespace nsUpdate = fac.createOMNamespace( SRUNamespaces.zingSRWupdate.getValue(),"ns4");
+        OMNamespace nsDiagnostic = fac.createOMNamespace(SRUNamespaces.diagnostic.getValue(),"ns3");
+        OMNamespace nsSRW = fac.createOMNamespace(SRUNamespaces.zingSRW.getValue(),"ns5");
+        OMNamespace nsXSI = fac.createOMNamespace(SRUNamespaces.xmlSchemaInstance.getValue(),"xsi");
 
         OMElement responseElement = fac.createOMElement("updateResponse", nsUpdate);
         responseElement.declareNamespace(nsDiagnostic);
@@ -144,9 +209,9 @@ public class SRWUpdateService {
         versionsElement.addAttribute("nil","true",nsXSI);
         OMElement recordElement = fac.createOMElement("record",nsSRW,responseElement);
 
+        fac.createOMElement("recordSchema", nsSRW, recordElement).setText(ResponseRecordMetaInfo.recordSchema.getValue());
+        fac.createOMElement("recordPacking",nsSRW,recordElement).setText(ResponseRecordMetaInfo.packaging.getValue());
 
-        fac.createOMElement("recordSchema",nsSRW,recordElement).setText(schema);
-        fac.createOMElement("recordPacking",nsSRW,recordElement).setText(packaging);
         OMElement recordData = fac.createOMElement("recordData",nsSRW,recordElement);
 
         if (Boolean.valueOf(MessageContext.getCurrentMessageContext().getAxisService().getParameter(RECORD_IN_RESPONSE).getValue().toString())) {
@@ -157,41 +222,122 @@ public class SRWUpdateService {
     }
 
 
-    private void serializeRecord (String actionType, String recordID, OMElement completeRecord, String leaderCharFiveOne ) throws Exception {
+    private OMElement createFailureResponse (String identifier, String failureMessage, String uri) {
+
+
+        //method creates the content which is sent back to the client and child of soapenv:Body tag
+
+        OMFactory fac = OMAbstractFactory.getOMFactory();
+
+        OMNamespace nsUpdate = fac.createOMNamespace( SRUNamespaces.zingSRWupdate.getValue(),"ns4");
+        OMNamespace nsDiagnostic = fac.createOMNamespace(SRUNamespaces.diagnostic.getValue(),"ns3");
+        OMNamespace nsSRW = fac.createOMNamespace(SRUNamespaces.zingSRW.getValue(),"ns5");
+        OMNamespace nsXSI = fac.createOMNamespace(SRUNamespaces.xmlSchemaInstance.getValue(),"xsi");
+
+        OMElement responseElement = fac.createOMElement("updateResponse", nsUpdate);
+        responseElement.declareNamespace(nsDiagnostic);
+        responseElement.declareNamespace(nsSRW);
+
+
+        /*
+
+<diagnostics>
+      <diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
+             <uri>info:srw/diagnostic/1/38</uri>
+             <details>10</details>
+             < message>
+                Too many boolean operators, the maximum is 10.
+                Please try a less complex query.</message>
+     < /diagnostic>
+< /diagnostics>
+         */
+
+
+
+
+        fac.createOMElement("version",nsSRW,responseElement).setText("1.0");
+        fac.createOMElement("operationStatus",nsSRW,responseElement).setText("fail");
+        fac.createOMElement("recordIdentifier",nsSRW,responseElement).setText(identifier);
+        OMElement versionsElement = fac.createOMElement("recordVersions",nsXSI,responseElement);
+        versionsElement.addAttribute("nil","true",nsXSI);
+        //OMElement recordElement = fac.createOMElement("record",nsSRW,responseElement);
+
+        //fac.createOMElement("recordSchema", nsSRW, recordElement).setText(ResponseRecordMetaInfo.recordSchema.getValue());
+        //fac.createOMElement("recordPacking",nsSRW,recordElement).setText(ResponseRecordMetaInfo.packaging.getValue());
+
+        OMElement diagnosticsElement = fac.createOMElement("diagnostics",null,responseElement);
+        OMElement diagnosticElement = fac.createOMElement("diagnostic",nsDiagnostic,diagnosticsElement);
+        fac.createOMElement("uri",null,diagnosticElement).setText(uri);
+        if (null != failureMessage) {
+            fac.createOMElement("message",null,diagnosticElement).setText(failureMessage);
+
+        }
+
+
+        //fac.createOMElement("recordData",nsSRW,recordElement);
+
+        //if (Boolean.valueOf(MessageContext.getCurrentMessageContext().getAxisService().getParameter(RECORD_IN_RESPONSE).getValue().toString())) {
+        //    recordData.addChild(completeRecord);
+        //}
+
+        return responseElement;
+    }
+
+
+
+    /**
+     *
+     * @param identifier of the record
+     * @return    content of the SOAP message (child tag of soapenv:Body)
+     */
+    private OMElement createDeleteResponse (String identifier) {
+
+
+
+        //method creates the content which is sent back to the client and child of soapenv:Body tag
+
+        OMFactory fac = OMAbstractFactory.getOMFactory();
+
+        OMNamespace nsUpdate = fac.createOMNamespace( SRUNamespaces.zingSRWupdate.getValue(),"ns4");
+        OMNamespace nsDiagnostic = fac.createOMNamespace(SRUNamespaces.diagnostic.getValue(),"ns3");
+        OMNamespace nsSRW = fac.createOMNamespace(SRUNamespaces.zingSRW.getValue(),"ns5");
+        OMNamespace nsXSI = fac.createOMNamespace(SRUNamespaces.xmlSchemaInstance.getValue(),"xsi");
+
+        OMElement responseElement = fac.createOMElement("updateResponse", nsUpdate);
+
+
+
+        responseElement.declareNamespace(nsDiagnostic);
+        responseElement.declareNamespace(nsSRW);
+
+        fac.createOMElement("version",nsSRW,responseElement).setText("1.0");
+        fac.createOMElement("operationStatus",nsSRW,responseElement).setText("success");
+        fac.createOMElement("recordIdentifier",nsSRW,responseElement).setText(identifier);
+        OMElement versionsElement = fac.createOMElement("recordVersions",nsXSI,responseElement);
+        versionsElement.addAttribute("nil","true",nsXSI);
+        OMElement recordElement = fac.createOMElement("record",nsSRW,responseElement);
+
+
+        fac.createOMElement("recordSchema", nsSRW, recordElement).setText(ResponseRecordMetaInfo.recordSchema.getValue());
+        fac.createOMElement("recordPacking",nsSRW,recordElement).setText(ResponseRecordMetaInfo.packaging.getValue());
+        fac.createOMElement("recordData",nsSRW,recordElement);
+
+        return responseElement;
+    }
+
+
+
+    private void serializeRecord (String recordID, OMElement completeRecord ) throws Exception {
 
         final  String UPD_DIR = "updateDir";
-        final String  DEL_DIR  = "deleteDir";
-        //final String DEL_PATTERN = "deletePattern";
         final String TRANSFORM_TEMPLATE = "transformTemplate";
-        final String FILE_PREFIX = "filePrefix";
-        final String FILE_SUFFIX = "fileSuffix";
-
         final String RECORD_NS = "recordWithNamespaces";
         final String NORMALIZE_CHARS = "normalizeChars";
 
-
-
         MessageContext mc =  MessageContext.getCurrentMessageContext();
-        Parameter delPattern = mc.getAxisService().getParameter(DEL_PATTERN);
-        String outputDir = null;
+        String outputDir = mc.getAxisService().getParameter(UPD_DIR).getValue().toString();
 
-        Pattern p =     (Pattern) delPattern.getValue();
-        if (p.matcher(actionType).find() || leaderCharFiveOne.equals("d"))  {
-
-            outputDir = mc.getAxisService().getParameter(DEL_DIR).getValue().toString();
-        } else {
-            outputDir = mc.getAxisService().getParameter(UPD_DIR).getValue().toString();
-        }
-
-        SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
-        //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-        Date currentDate = new Date();
-        String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
-
-        File recordFile =  new File(outputDir + timeFilePrefix + "_" +
-                mc.getAxisService().getParameter(FILE_PREFIX).getValue().toString() +
-                recordID +
-                mc.getAxisService().getParameter(FILE_SUFFIX).getValue().toString());
+        File recordFile = createFileForSerialization(outputDir,recordID);
 
 
 
@@ -201,20 +347,12 @@ public class SRWUpdateService {
 
         //do we want the target record without namespaces?
         if (! Boolean.valueOf(mc.getAxisService().getParameter(RECORD_NS).getValue().toString())) {
-
             Source sourceWithNS = new StreamSource(new StringReader(serializedRecord.toString()));
-
             serializedRecord = new StringWriter();
-
             Result tempXsltResult = new StreamResult(serializedRecord);
-
             Parameter template = mc.getAxisService().getParameter(TRANSFORM_TEMPLATE);
             Templates recordTemplate  =  ((Templates) template.getValue());
-
-
             recordTemplate.newTransformer().transform(sourceWithNS,tempXsltResult);
-
-
         }
 
         //do we want to normalize the chars?
@@ -234,7 +372,31 @@ public class SRWUpdateService {
     }
 
 
-    private void  logMessages (String messageID, String actionText, String leaderCharPos6) {
+    private void serializeDeleteRecord (String recordID, OMElement deleteMessage) throws Exception {
+
+        final String  DEL_DIR  = "deleteDir";
+
+
+        MessageContext mc =  MessageContext.getCurrentMessageContext();
+        String outputDir = mc.getAxisService().getParameter(DEL_DIR).getValue().toString();
+
+        File recordFile = createFileForSerialization(outputDir,recordID);
+
+
+        StringWriter serializedRecord = new StringWriter();
+        deleteMessage.serialize(serializedRecord);
+
+
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream( recordFile),"UTF-8"));
+        bw.write(serializedRecord.toString());
+
+        bw.flush();
+        bw.close();
+
+    }
+
+
+    private void  logMessages (String messageID, String actionText) {
 
         final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
         final String LOG_MESSAGES  = "logMessages";
@@ -261,9 +423,9 @@ public class SRWUpdateService {
 
                 //long currentTimestamp = currentDate.getTime();
 
-                Parameter delPattern = mc.getAxisService().getParameter(DEL_PATTERN);
+                //Parameter delPattern = mc.getAxisService().getParameter(DEL_PATTERN);
 
-                Pattern p =  (Pattern) delPattern.getValue();
+                //Pattern p =  (Pattern) delPattern.getValue();
 
                 /*
                 actually we see the problem that our data-hub sends SRU messages containing a create or replace
@@ -271,15 +433,15 @@ public class SRWUpdateService {
                 These records are going to be deleted on the SearchIndex (look at serializeRecord method) and the original action text is extended
                 to mark such cases in the logs
                 */
-                if (leaderCharPos6.equals("d") && ! p.matcher(actionText).find()) {
-                    actionText = actionText + ":sbdelete";
-                }
+                //if (leaderCharPos6.equals("d") && ! p.matcher(actionText).find()) {
+                //    actionText = actionText + ":sbdelete";
+                //}
 
 
                 BasicDBObject doc = new BasicDBObject("id", messageID).
                         append("action", actionText).
                         append("updateDay", simpleFormatDay.format(currentDate)).
-                        append("marcStatus", leaderCharPos6).
+                        //append("marcStatus", leaderCharPos6).
                         append("timestamp", currentDate.getTime()).
                         append("readTime", exactHumanReadbleTime.format(currentDate));
 
@@ -296,6 +458,29 @@ public class SRWUpdateService {
 
 
 
+    }
+
+
+    private File createFileForSerialization(String baseDir, String recordID) {
+
+        final String FILE_PREFIX = "filePrefix";
+        final String FILE_SUFFIX = "fileSuffix";
+
+        MessageContext mc =  MessageContext.getCurrentMessageContext();
+
+
+        SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
+        //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        Date currentDate = new Date();
+        String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
+
+        File recordFile =  new File(baseDir + timeFilePrefix + "_" +
+                mc.getAxisService().getParameter(FILE_PREFIX).getValue().toString() +
+                recordID +
+                mc.getAxisService().getParameter(FILE_SUFFIX).getValue().toString());
+
+
+        return recordFile;
     }
 
 

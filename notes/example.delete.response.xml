@@ -1,0 +1,18 @@
+<?xml version='1.0' encoding='utf-8'?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+    <soapenv:Body>
+        <ns4:updateResponse xmlns:ns4="http://www.loc.gov/zing/srw/update/"
+            xmlns:ns3="http://www.loc.gov/zing/srw/diagnostic/"
+            xmlns:ns5="http://www.loc.gov/zing/srw/">
+            <ns5:version>1.0</ns5:version>
+            <ns5:operationStatus>success</ns5:operationStatus>
+            <ns5:recordIdentifier>186533039</ns5:recordIdentifier>
+            <xsi:recordVersions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>
+            <ns5:record>
+                <ns5:recordSchema>info:srw/schema/1/marcxml-v1.1</ns5:recordSchema>
+                <ns5:recordPacking>xml</ns5:recordPacking>
+                <ns5:recordData/>
+            </ns5:record>
+        </ns4:updateResponse>
+    </soapenv:Body>
+</soapenv:Envelope>

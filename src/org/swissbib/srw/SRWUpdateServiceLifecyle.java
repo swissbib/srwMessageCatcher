@@ -77,6 +77,7 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String MONGO_DB  = "MONGO.DB";
         final String ACTIVE_MONGO_CLIENT = "activeMongoClient";
         final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
+        final String CHECK_LEADER_FOR_DELETE = "checkLeaderForDelete";
 
 
 
@@ -96,21 +97,17 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
             Parameter recordNS = axisService.getParameter(RECORD_NS);
             axisService.addParameter(recordNS);
 
+            Parameter checkLeaderForDelete = axisService.getParameter(CHECK_LEADER_FOR_DELETE);
+            boolean checkLeader =   Boolean.valueOf(checkLeaderForDelete.getValue().toString());
+            axisService.addParameter(CHECK_LEADER_FOR_DELETE,checkLeader);
+
+
             Parameter normalizeChars = axisService.getParameter(NORMALIZE_CHARS);
             axisService.addParameter(normalizeChars);
 
 
             Parameter recordInResponse = axisService.getParameter(RECORD_IN_RESPONSE);
             axisService.addParameter(recordInResponse);
-
-            //info:srw/action/1/delete
-            //info:srw/action/1/replace
-            //info:srw/action/1/create
-            Parameter delPattern = axisService.getParameter(DEL_PATTERN);
-            String pattern = delPattern.getValue().toString();
-            Pattern p = Pattern.compile(pattern,Pattern.CASE_INSENSITIVE);
-
-            axisService.addParameter(new Parameter(DEL_PATTERN,p));
 
             String transformTemplate = axisService.getParameter(TRANSFORM_TEMPLATE).getValue().toString();
 

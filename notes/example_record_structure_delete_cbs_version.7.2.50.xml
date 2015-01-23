@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+        <ucp:updateRequest xmlns:srw="http://www.loc.gov/zing/srw/"
+            xmlns:ucp="http://www.loc.gov/zing/srw/update/">
+            <srw:version>1.0</srw:version>
+            <ucp:action>info:srw/action/1/delete</ucp:action>
+            <ucp:recordIdentifier>186533039</ucp:recordIdentifier>
+            <srw:record>
+                <srw:recordPacking>xml</srw:recordPacking>
+                <srw:recordSchema>info:srw/schema/1/marcxml-v1.1</srw:recordSchema>
+                <srw:recordData/>
+            </srw:record>
+        </ucp:updateRequest>
+    </soap:Body>
+</soap:Envelope>
