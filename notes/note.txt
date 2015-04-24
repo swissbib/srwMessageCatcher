@@ -67,3 +67,7 @@ curl -H "Content-Type: text/xml; charset=utf-8" \
      -H "SOAPAction:" \
      -d @example_record_structure_delete_cbs_version.7.2.50.xml \
      -X POST http://localhost:8080/axis2/services/UpdateService/update
+
+
+remote debugging tomcat
+http://blog.trifork.com/2014/07/14/how-to-remotely-debug-application-running-on-tomcat-from-within-intellij-idea/
