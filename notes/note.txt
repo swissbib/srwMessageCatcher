@@ -51,6 +51,11 @@ curl -H "Content-Type: text/xml; charset=utf-8" \
      -X POST http://localhost:8080/axis2/services/UpdateService/update
 
 
+curl -H "Content-Type: text/xml; charset=utf-8" \
+     -H "SOAPAction:" \
+     -d @REQ_094491089.xml \
+     -X POST http://localhost:8080/axis2/services/UpdateService/updateRDF
+
 
 //create
 curl -H "Content-Type: text/xml; charset=utf-8" \
@@ -69,5 +74,3 @@ curl -H "Content-Type: text/xml; charset=utf-8" \
      -X POST http://localhost:8080/axis2/services/UpdateService/update
 
 
-remote debugging tomcat
-http://blog.trifork.com/2014/07/14/how-to-remotely-debug-application-running-on-tomcat-from-within-intellij-idea/

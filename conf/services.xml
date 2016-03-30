@@ -5,11 +5,21 @@
 
     <parameter name="ServiceClass">org.swissbib.srw.SRWUpdateService</parameter>
 
+    <!-- catcher for messages being processed in swissbib classic SE environment-->
     <operation name="update">
         <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
-    </operation>git add
+    </operation>
 
-    <parameter name="updateDir">[path to store the replace and create messages]</parameter>
+
+    <!-- catcher for messages being processed in lod environment-->
+    <operation name="updateRDF">
+        <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
+    </operation>
+
+
+
+    <parameter name="createDir">[path to store the create messages - by now only used in LOD environment]</parameter>
+    <parameter name="updateDir">[path to store the replace and create messages swissbib classic]</parameter>
     <parameter name="deleteDir">[path to store the delete messages]</parameter>
     <parameter name="transformTemplate">org/swissbib/srw/createRecordWithOutNamespaces.xslt</parameter>
     <parameter name="filePrefix">REQ_</parameter>

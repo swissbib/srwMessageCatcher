@@ -1,6 +1,11 @@
 package org.swissbib.srw;
 
 import com.mongodb.*;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
+
+
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.description.AxisService;
@@ -12,9 +17,7 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
-import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.regex.Pattern;
 
 /**
  * [...description of the type ...]
@@ -53,6 +56,7 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 //http://shameerarathnayaka.blogspot.ch/2011/09/remote-debugging-apache-axis2-with.html
 //http://insightforfuture.blogspot.ch/2012/05/what-is-remote-debugging-java.html
 
+    final String ACTIVE_MONGO_CLIENT = "activeMongoClient";
 
 
 
@@ -61,8 +65,9 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
         System.out.println("in startup");
 
-        final  String UPD_DIR = "updateDir";
-        final String  DEL_DIR  = "deleteDir";
+        final String UPD_DIR = "updateDir";
+        final String DEL_DIR  = "deleteDir";
+        final String CREATE_DIR = "createDir";
         final String DEL_PATTERN = "deletePattern";
         final String TRANSFORM_TEMPLATE = "transformTemplate";
         final String FILE_PREFIX = "filePrefix";
@@ -75,7 +80,6 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String MONGO_CLIENT  = "MONGO.CLIENT";
         final String MONGO_AUTHENTICATION  = "MONGO.AUTHENTICATION";
         final String MONGO_DB  = "MONGO.DB";
-        final String ACTIVE_MONGO_CLIENT = "activeMongoClient";
         final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
         final String CHECK_LEADER_FOR_DELETE = "checkLeaderForDelete";
 
@@ -128,13 +132,10 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
                 try {
 
+
                     //it is expected:
                     // <parameter name="MONGO.CLIENT">[host]###[port]</parameter>
                     String[] mongoClient = ((String)axisService.getParameter(MONGO_CLIENT).getValue()).split("###");
-
-                    //Todo: right now I expect the Mongo storage is running in secure mode
-                    //if not the procedure to connect is a little bit different
-                    //take a look at GND and DSV11 Plugin in content2SearchDoc repository. Configuration for messageCatcher should be adapted
 
                     //it is expected that mongoAuthentication contains the values for:
                     //<parameter name="MONGO.AUTHENTICATION">[auth-db]###[user]###[password]</parameter>
@@ -148,49 +149,40 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
                     ServerAddress server = new ServerAddress(mongoClient[0], Integer.valueOf(mongoClient[1]));
 
-                    MongoCredential credential = MongoCredential.createMongoCRCredential(mongoAuthentication[1], mongoAuthentication[0], mongoAuthentication[2].toCharArray());
-                    MongoClient mClient = new MongoClient(server, Arrays.asList(credential));
-                    DB db =  mClient.getDB(mongoAuthentication[0]);
+                    MongoClient mClient = null;
 
-
-                    //simple test if authentication was successfull
-                    CommandResult cR = db.getStats();
-
-                    if (cR != null && cR.ok()) {
-
-                        System.out.println("authenticated");
-                        //mongoDB contains the application DB and collection within this DB
-                        DB messageDB = mClient.getDB(mongoDB[0]);
-                        DBCollection messageCollection = messageDB.getCollection(mongoDB[1]);
-                        axisService.addParameter(new Parameter(ACTIVE_MONGO_COLLECTION,messageCollection));
-                        axisService.addParameter(new Parameter(LOG_MESSAGES,"true"));
-
+                    if ( mongoAuthentication.length == 3 ) {
+                        MongoCredential credential = MongoCredential.createMongoCRCredential(mongoAuthentication[1], mongoAuthentication[0], mongoAuthentication[2].toCharArray());
+                        mClient = new MongoClient(server, Arrays.asList(credential));
                     } else {
-
-                        System.out.println("not authenticated");
-                        throw new Exception("authentication against Mongo database wasn't possible - message logging isn't possible");
+                        mClient = new MongoClient( server );
                     }
 
+                    MongoDatabase messageDb = mClient.getDatabase(mongoDB[0]);
+                    MongoCollection<Document> messageCollection =  messageDb.getCollection(mongoDB[1]);
+                    axisService.addParameter(new Parameter(ACTIVE_MONGO_COLLECTION,messageCollection));
+                    axisService.addParameter(new Parameter(LOG_MESSAGES,"true"));
+                    axisService.addParameter(new Parameter(ACTIVE_MONGO_CLIENT,mClient));
 
-                } catch   (UnknownHostException uhExc) {
-                    axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
-                    uhExc.printStackTrace();
+                    axisService.addParameter(new Parameter(ACTIVE_MONGO_COLLECTION,messageCollection));
+                    axisService.addParameter(new Parameter(LOG_MESSAGES,"true"));
+
+                    System.out.println("With MOngo DB connected");
+
+
 
                 } catch (Exception exc) {
+
+                    System.out.println("in Exception");
 
                     axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
                     exc.printStackTrace();
                 }
 
 
-
-
             } else {
                 axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
             }
-
-
-
 
 
         } catch (AxisFault aF) {
@@ -206,9 +198,14 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
     @Override
     public void shutDown(ConfigurationContext configurationContext, AxisService axisService) {
         System.out.println("in shutdown");
-        //To change body of implemented methods use File | Settings | File Templates.
+        Parameter parameter = axisService.getParameter(ACTIVE_MONGO_CLIENT);
+        Object o = parameter.getValue();
+        if (null != o) {
+            MongoClient client = (MongoClient) o;
+            client.close();
+            System.out.println("Mongo client was closed");
+        }
+
     }
-
-
 
 }

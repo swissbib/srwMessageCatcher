@@ -1,10 +1,11 @@
 package org.swissbib.srw;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
+import  com.mongodb.client.MongoCollection;
 import org.apache.axiom.om.*;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.description.Parameter;
+import org.bson.Document;
+
 import javax.xml.namespace.QName;
 import javax.xml.transform.*;
 import javax.xml.transform.stream.StreamResult;
@@ -51,9 +52,9 @@ public class SRWUpdateService {
 
 
     private enum SRUActions {
-        delete("srw/action/1/delete"),
-        replace("rw/action/1/replace"),
-        create("rw/action/1/create");
+        delete("info:srw/action/1/delete"),
+        replace("info:srw/action/1/replace"),
+        create("info:srw/action/1/create");
 
         String action;
         SRUActions(String action) {
@@ -61,6 +62,17 @@ public class SRWUpdateService {
         }
         public String getValue() {
             return this.action;
+        }
+
+        public static SRUActions fromString(String text) {
+            if (text != null) {
+                for (SRUActions action : SRUActions.values()) {
+                    if (text.equalsIgnoreCase(action.getValue())) {
+                        return action;
+                    }
+                }
+            }
+            return null;
         }
 
     }
@@ -99,6 +111,72 @@ public class SRWUpdateService {
         }
     }
 
+    public OMElement updateRDF (OMElement record) {
+        final String CHECK_LEADER_FOR_DELETE = "checkLeaderForDelete";
+
+        OMElement responseElement = null;
+
+        try {
+
+
+            String idText = getRecordId(record);
+            String actionText = getActionText(record);
+
+            Pattern pDeleteAction =   Pattern.compile(SRUActions.delete.getValue(),Pattern.CASE_INSENSITIVE);
+
+
+            OMElement srwRecord = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRW.getValue(),"record"));
+            if (null != srwRecord) {
+                OMElement srwRecordData = srwRecord.getFirstChildWithName(new QName(SRUNamespaces.zingSRW.getValue(),"recordData"));
+
+                if (null != srwRecordData) {
+                    OMElement completeRecordOmElement= srwRecordData.getFirstChildWithName(new QName(SRUNamespaces.marc21Slim.getValue(), "record"));
+
+
+                    if (null != completeRecordOmElement) {
+                        MessageContext mc =  MessageContext.getCurrentMessageContext();
+                        if ( pDeleteAction.matcher(actionText).find() ||  (Boolean.valueOf( mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString()) && checkLeaderForDelete(completeRecordOmElement))) {
+                            //Todo: write log
+                            //serializeDeleteRecord(idText,record);
+                            serializeRecord(idText,completeRecordOmElement, getOutputDir(SRUActions.delete), true);
+                            responseElement =  createDeleteResponse(idText);
+                            //we create a different responseElement for delete messages
+                            //why? is this a commitment with OCLC (H.v.E) ??
+                        } else {
+
+
+
+                            //for the swissbib classic procedure we serialize all the records into the updateDir
+                            serializeRecord(idText,completeRecordOmElement, getOutputDir(SRUActions.fromString(actionText)), true);
+                            responseElement = createUpdateReplaceResponse(idText, completeRecordOmElement);
+
+                        }
+                        logMessages(idText,actionText);
+                    } else {
+
+                        responseElement = createFailureResponse(idText,"replace or create message without complete record element","info:srw/diagnostic/12/1");
+                    }
+
+
+                } else {
+                    responseElement = createFailureResponse(idText,"replace or create message without record data","info:srw/diagnostic/12/1");
+                }
+
+
+            }
+
+        } catch (Exception except) {
+
+            except.printStackTrace();
+
+        } catch (Throwable throwable) {
+            throwable.printStackTrace();
+        }
+
+        return responseElement;
+
+
+    }
 
 
 
@@ -112,15 +190,17 @@ public class SRWUpdateService {
         try {
 
 
-            String idText = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRWupdate.getValue(),"recordIdentifier")).getText();
-            String actionText = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRWupdate.getValue(),"action")).getText();
+            String idText = getRecordId(record);
+            String actionText = getActionText(record);
 
-            Pattern pDeleteAction =     Pattern.compile(SRUActions.delete.getValue(),Pattern.CASE_INSENSITIVE);
+            Pattern pDeleteAction =   Pattern.compile(SRUActions.delete.getValue(),Pattern.CASE_INSENSITIVE);
 
             if (pDeleteAction.matcher(actionText).find())  {
-                //Todo: seraialize Delete record
-                serializeDeleteRecord(idText,record);
+                //Todo: serialize Delete record
+                //serializeDeleteRecord(idText,record);
+                serializeRecord(idText,record, getOutputDir(SRUActions.fromString(actionText)), false);
                 responseElement =  createDeleteResponse(idText);
+                logMessages(idText,actionText);
             } else {
 
                 OMElement srwRecord = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRW.getValue(),"record"));
@@ -134,17 +214,23 @@ public class SRWUpdateService {
                         if (null != completeRecordOmElement) {
                             MessageContext mc =  MessageContext.getCurrentMessageContext();
                             if ( Boolean.valueOf( mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString()) && checkLeaderForDelete(completeRecordOmElement)) {
-                                //Todo: write log
-                                serializeDeleteRecord(idText,record);
+
+                                //serializeDeleteRecord(idText,record);
+                                //swissbib classic is using the complete (SOAP) record in the document processing
+                                //should be changed
+                                serializeRecord(idText,record, getOutputDir(SRUActions.fromString(actionText)), false);
                                 responseElement =  createDeleteResponse(idText);
                             } else {
-                                serializeRecord(idText,completeRecordOmElement);
+
+
+                                //for the swissbib classic procedure we serialize all the records into the updateDir
+                                serializeRecord(idText,completeRecordOmElement, getOutputDir(SRUActions.replace), true);
                                 responseElement = createUpdateReplaceResponse(idText, completeRecordOmElement);
 
-                                //Todo change signature for logMessages
-                                logMessages(idText,actionText);
+
 
                             }
+                            logMessages(idText,actionText);
                         } else {
 
                             responseElement = createFailureResponse(idText,"replace or create message without complete record element","info:srw/diagnostic/12/1");
@@ -171,11 +257,37 @@ public class SRWUpdateService {
 
     }
 
+
+    private String getOutputDir (SRUActions action) {
+
+        MessageContext mc =  MessageContext.getCurrentMessageContext();
+        String outputDir = null;
+
+
+        switch (action) {
+            case create:
+                outputDir = mc.getAxisService().getParameter("createDir").getValue().toString();
+                break;
+            case replace:
+                outputDir = mc.getAxisService().getParameter("updateDir").getValue().toString();
+                break;
+            case delete:
+                outputDir = mc.getAxisService().getParameter("deleteDir").getValue().toString();
+                break;
+        }
+
+        return outputDir;
+
+    }
+
     private boolean checkLeaderForDelete(OMElement completeRecordOmElement) {
 
         //OMElement leaderOME =  completeRecordOmElement.getFirstChildWithName(new QName(nsURImxSLIM,"leader"));
         //String leaderChar = leaderOME != null ? leaderOME.getText().substring(5,6): "";
         //Todo: implement this method
+
+        //this was implemented and used before CBS chanegd the behaviour and has sent (hopefully) always correct delete messages
+        //we are going to use it again once the CBS implementation is again wrong
         return false;
     }
 
@@ -327,17 +439,16 @@ public class SRWUpdateService {
 
 
 
-    private void serializeRecord (String recordID, OMElement completeRecord ) throws Exception {
+    private void serializeRecord (String recordID, OMElement completeRecord, String directoryPath, boolean transformRecord) throws Exception {
 
-        final  String UPD_DIR = "updateDir";
         final String TRANSFORM_TEMPLATE = "transformTemplate";
         final String RECORD_NS = "recordWithNamespaces";
         final String NORMALIZE_CHARS = "normalizeChars";
 
         MessageContext mc =  MessageContext.getCurrentMessageContext();
-        String outputDir = mc.getAxisService().getParameter(UPD_DIR).getValue().toString();
+        //String outputDir = mc.getAxisService().getParameter(UPD_DIR).getValue().toString();
 
-        File recordFile = createFileForSerialization(outputDir,recordID);
+        File recordFile = createFileForSerialization(directoryPath,recordID);
 
 
 
@@ -346,7 +457,7 @@ public class SRWUpdateService {
 
 
         //do we want the target record without namespaces?
-        if (! Boolean.valueOf(mc.getAxisService().getParameter(RECORD_NS).getValue().toString())) {
+        if (transformRecord && !Boolean.valueOf(mc.getAxisService().getParameter(RECORD_NS).getValue().toString())) {
             Source sourceWithNS = new StreamSource(new StringReader(serializedRecord.toString()));
             serializedRecord = new StringWriter();
             Result tempXsltResult = new StreamResult(serializedRecord);
@@ -370,6 +481,10 @@ public class SRWUpdateService {
         bw.close();
 
     }
+
+
+
+
 
 
     private void serializeDeleteRecord (String recordID, OMElement deleteMessage) throws Exception {
@@ -407,7 +522,7 @@ public class SRWUpdateService {
             //String test = mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString();
             if ( Boolean.valueOf (mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString())) {
 
-                DBCollection mongoCollection = (DBCollection) mc.getAxisService().getParameter(ACTIVE_MONGO_COLLECTION).getValue();
+                MongoCollection<Document> mongoCollection = (MongoCollection<Document>) mc.getAxisService().getParameter(ACTIVE_MONGO_COLLECTION).getValue();
 
                 //SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
                 SimpleDateFormat simpleFormatDay = new SimpleDateFormat("yyyy-MM-dd");
@@ -438,14 +553,15 @@ public class SRWUpdateService {
                 //}
 
 
-                BasicDBObject doc = new BasicDBObject("id", messageID).
+                Document doc = new Document().
+                        append("id", messageID).
                         append("action", actionText).
                         append("updateDay", simpleFormatDay.format(currentDate)).
                         //append("marcStatus", leaderCharPos6).
                         append("timestamp", currentDate.getTime()).
                         append("readTime", exactHumanReadbleTime.format(currentDate));
 
-                mongoCollection.insert(doc);
+                mongoCollection.insertOne(doc);
 
 
             }
@@ -483,6 +599,14 @@ public class SRWUpdateService {
         return recordFile;
     }
 
+
+    private String getRecordId(OMElement record) {
+        return record.getFirstChildWithName(new QName(SRUNamespaces.zingSRWupdate.getValue(),"recordIdentifier")).getText();
+    }
+
+    private String getActionText(OMElement record) {
+        return record.getFirstChildWithName(new QName(SRUNamespaces.zingSRWupdate.getValue(),"action")).getText();
+    }
 
 
 }

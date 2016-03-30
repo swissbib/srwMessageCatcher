@@ -2,5 +2,8 @@
 .idea
 customLibs
 
-conf/services.passwords.xml
+conf/services.nogit*
 bin
+
+notes/nogit.*
+

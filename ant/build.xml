@@ -4,7 +4,7 @@
     <property name="aar.dir" value="aar" />
     <property name="bin.dir" value="bin" />
     <property name="conf.dir" value="conf" />
-    <property name="custom.libs" value="customLibs" />
+    <property name="custom.libs" value="customLibs/new" />
 
     <property name="deploy.file" value="SRWSearchDocumentsCatcher.aar" />
     <property name="deploy.path" value="/home/swissbib/temp/testaxis2" />
@@ -13,7 +13,7 @@
         <fileset dir="/home/swissbib/Downloads/axis2/axis2-1.6.2.bin/lib">
             <include name="*.jar"/>
         </fileset>
-        <fileset dir="customLibs/lib">
+        <fileset dir="${custom.libs}/lib">
             <include name="*.jar"/>
         </fileset>
     </path>
@@ -32,8 +32,8 @@
 
 
         <javac debug="on"
-               target="1.7"
-               source="1.7"
+               target="1.8"
+               source="1.8"
                fork="true"
                destdir="${bin.dir}"
                srcdir="${src.dir}"
