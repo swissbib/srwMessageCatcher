@@ -75,6 +75,8 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String RECORD_NS = "recordWithNamespaces";
         final String NORMALIZE_CHARS = "normalizeChars";
         final String RECORD_IN_RESPONSE  = "includeRecordInResponse";
+        final String TRANSFORM_CLASSIC_RECORD =  "transformClassicRecord";
+        final String TRANSFORM_RDF_RECORD =  "transformRdfRecord";
 
         final String LOG_MESSAGES  = "logMessages";
         final String MONGO_CLIENT  = "MONGO.CLIENT";
@@ -82,12 +84,18 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String MONGO_DB  = "MONGO.DB";
         final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
         final String CHECK_LEADER_FOR_DELETE = "checkLeaderForDelete";
+        final String TEMPLATE_CREATE_MARCXML =  "templateCreateMarcXml";
 
 
 
         try {
             Parameter updDir = axisService.getParameter(UPD_DIR);
             axisService.addParameter(updDir);
+
+
+            Parameter createDir = axisService.getParameter(CREATE_DIR);
+            axisService.addParameter(createDir);
+
 
             Parameter delDir = axisService.getParameter(DEL_DIR);
             axisService.addParameter(delDir);
@@ -104,6 +112,24 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
             Parameter checkLeaderForDelete = axisService.getParameter(CHECK_LEADER_FOR_DELETE);
             boolean checkLeader =   Boolean.valueOf(checkLeaderForDelete.getValue().toString());
             axisService.addParameter(CHECK_LEADER_FOR_DELETE,checkLeader);
+
+            Parameter transformClassicRecord = axisService.getParameter(TRANSFORM_CLASSIC_RECORD);
+            axisService.addParameter(TRANSFORM_CLASSIC_RECORD,Boolean.valueOf(transformClassicRecord.getValue().toString()));
+
+
+            Parameter transformRdfRecord = axisService.getParameter(TRANSFORM_RDF_RECORD);
+            axisService.addParameter(TRANSFORM_RDF_RECORD,Boolean.valueOf(transformRdfRecord.getValue().toString()));
+
+
+
+            Parameter logCompleteRecordClassic = axisService.getParameter(ApplicationConstants.LOG_COMPLETE_RECORD_CLASSIC.getValue());
+            axisService.addParameter(ApplicationConstants.LOG_COMPLETE_RECORD_CLASSIC.getValue(),
+                    Boolean.valueOf(logCompleteRecordClassic.getValue().toString()));
+
+
+            Parameter logCompleteRecordRDF = axisService.getParameter(ApplicationConstants.LOG_COMPLETE_RECORD_RDF.getValue());
+            axisService.addParameter(ApplicationConstants.LOG_COMPLETE_RECORD_RDF.getValue(),
+                    Boolean.valueOf(logCompleteRecordRDF.getValue().toString()));
 
 
             Parameter normalizeChars = axisService.getParameter(NORMALIZE_CHARS);
@@ -123,6 +149,22 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
             Templates recordTransformer = transformerFactory.newTemplates(source);
 
             axisService.addParameter(new Parameter(TRANSFORM_TEMPLATE,recordTransformer));
+
+
+
+            String recordToLog = axisService.getParameter(TEMPLATE_CREATE_MARCXML).getValue().toString();
+
+            InputStream streamRecord = getClass().getClassLoader().getResourceAsStream(recordToLog);
+
+            StreamSource sourceRecord = new StreamSource(streamRecord);
+            transformerFactory = TransformerFactory.newInstance();
+            //Transformer transform = transformerFactory.newTransformer(source);
+            Templates recordToLogTransformer = transformerFactory.newTemplates(sourceRecord);
+
+            axisService.addParameter(new Parameter(TEMPLATE_CREATE_MARCXML,recordToLogTransformer));
+
+
+
 
             //logging of messages?
             Parameter logging = axisService.getParameter(LOG_MESSAGES);

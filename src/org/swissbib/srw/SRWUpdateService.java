@@ -50,8 +50,12 @@ import java.util.regex.Pattern;
 public class SRWUpdateService {
 
 
+    enum UpdateType {
+        linked_swissbib,
+        swissbib_classic
+    }
 
-    private enum SRUActions {
+    enum SRUActions {
         delete("info:srw/action/1/delete"),
         replace("info:srw/action/1/replace"),
         create("info:srw/action/1/create");
@@ -78,7 +82,7 @@ public class SRWUpdateService {
     }
 
 
-    private enum ResponseRecordMetaInfo {
+    enum ResponseRecordMetaInfo {
         packaging("xml"),
         recordSchema("info:srw/schema/1/marcxml-v1.1");
 
@@ -93,7 +97,7 @@ public class SRWUpdateService {
     }
 
 
-    private enum SRUNamespaces {
+    enum SRUNamespaces {
         marc21Slim("http://www.loc.gov/MARC21/slim"),
         diagnostic("http://www.loc.gov/zing/srw/diagnostic/"), //prefix -> ns3
         zingSRWupdate("http://www.loc.gov/zing/srw/update/"), //prefix -> ns4
@@ -119,6 +123,14 @@ public class SRWUpdateService {
         try {
 
 
+            UpdateImplementation updateImplementation = new UpdateImplementation(record, UpdateType.linked_swissbib);
+
+
+            responseElement = updateImplementation.processMessage();
+
+
+
+
             String idText = getRecordId(record);
             String actionText = getActionText(record);
 
@@ -138,7 +150,7 @@ public class SRWUpdateService {
                         if ( pDeleteAction.matcher(actionText).find() ||  (Boolean.valueOf( mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString()) && checkLeaderForDelete(completeRecordOmElement))) {
                             //Todo: write log
                             //serializeDeleteRecord(idText,record);
-                            serializeRecord(idText,completeRecordOmElement, getOutputDir(SRUActions.delete), true);
+                            serializeRecord(idText,completeRecordOmElement, getOutputDir(SRUActions.delete), true, SRUActions.delete);
                             responseElement =  createDeleteResponse(idText);
                             //we create a different responseElement for delete messages
                             //why? is this a commitment with OCLC (H.v.E) ??
@@ -147,11 +159,11 @@ public class SRWUpdateService {
 
 
                             //for the swissbib classic procedure we serialize all the records into the updateDir
-                            serializeRecord(idText,completeRecordOmElement, getOutputDir(SRUActions.fromString(actionText)), true);
+                            serializeRecord(idText,completeRecordOmElement, getOutputDir(SRUActions.fromString(actionText)), true, SRUActions.fromString(actionText));
                             responseElement = createUpdateReplaceResponse(idText, completeRecordOmElement);
 
                         }
-                        logMessages(idText,actionText);
+                        logMessages(idText,actionText,completeRecordOmElement);
                     } else {
 
                         responseElement = createFailureResponse(idText,"replace or create message without complete record element","info:srw/diagnostic/12/1");
@@ -200,7 +212,7 @@ public class SRWUpdateService {
                 //serializeDeleteRecord(idText,record);
                 serializeRecord(idText,record, getOutputDir(SRUActions.fromString(actionText)), false);
                 responseElement =  createDeleteResponse(idText);
-                logMessages(idText,actionText);
+                logMessages(idText,actionText,record);
             } else {
 
                 OMElement srwRecord = record.getFirstChildWithName(new QName(SRUNamespaces.zingSRW.getValue(),"record"));
@@ -230,7 +242,7 @@ public class SRWUpdateService {
 
 
                             }
-                            logMessages(idText,actionText);
+                            logMessages(idText,actionText,completeRecordOmElement);
                         } else {
 
                             responseElement = createFailureResponse(idText,"replace or create message without complete record element","info:srw/diagnostic/12/1");
@@ -441,15 +453,64 @@ public class SRWUpdateService {
 
     private void serializeRecord (String recordID, OMElement completeRecord, String directoryPath, boolean transformRecord) throws Exception {
 
+        final String FILE_PREFIX = "filePrefix";
+        final String FILE_SUFFIX = "fileSuffix";
+
+        MessageContext mc =  MessageContext.getCurrentMessageContext();
+
+
+        SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
+        //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        Date currentDate = new Date();
+        String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
+
+        File recordFile =  new File(directoryPath + timeFilePrefix + "_" +
+                mc.getAxisService().getParameter(FILE_PREFIX).getValue().toString() +
+                recordID  +
+                mc.getAxisService().getParameter(FILE_SUFFIX).getValue().toString());
+
+
+        doSerialization(recordID,completeRecord,recordFile,transformRecord);
+
+    }
+
+
+    private void serializeRecord (String recordID, OMElement completeRecord, String directoryPath, boolean transformRecord,
+                                  SRUActions currentAction) throws Exception {
+
+
+        final String FILE_PREFIX = "filePrefix";
+        final String FILE_SUFFIX = "fileSuffix";
+
+        MessageContext mc =  MessageContext.getCurrentMessageContext();
+
+
+        SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
+        //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+        Date currentDate = new Date();
+        String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
+
+        File recordFile =  new File(directoryPath + timeFilePrefix + "_" +
+                mc.getAxisService().getParameter(FILE_PREFIX).getValue().toString() +
+                recordID + currentAction.name() +
+                mc.getAxisService().getParameter(FILE_SUFFIX).getValue().toString());
+
+
+        doSerialization(recordID,completeRecord,recordFile,transformRecord);
+
+
+    }
+
+
+
+    private void doSerialization (String recordID, OMElement completeRecord, File recordFile, boolean transformRecord) throws Exception {
+
         final String TRANSFORM_TEMPLATE = "transformTemplate";
         final String RECORD_NS = "recordWithNamespaces";
         final String NORMALIZE_CHARS = "normalizeChars";
 
         MessageContext mc =  MessageContext.getCurrentMessageContext();
         //String outputDir = mc.getAxisService().getParameter(UPD_DIR).getValue().toString();
-
-        File recordFile = createFileForSerialization(directoryPath,recordID);
-
 
 
         StringWriter serializedRecord = new StringWriter();
@@ -486,7 +547,6 @@ public class SRWUpdateService {
 
 
 
-
     private void serializeDeleteRecord (String recordID, OMElement deleteMessage) throws Exception {
 
         final String  DEL_DIR  = "deleteDir";
@@ -511,7 +571,7 @@ public class SRWUpdateService {
     }
 
 
-    private void  logMessages (String messageID, String actionText) {
+    private void  logMessages (String messageID, String actionText, OMElement recordToLog) {
 
         final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
         final String LOG_MESSAGES  = "logMessages";
@@ -552,6 +612,18 @@ public class SRWUpdateService {
                 //    actionText = actionText + ":sbdelete";
                 //}
 
+                StringWriter serializedRecord = new StringWriter();
+
+                if (Boolean.valueOf(mc.getAxisService().getParameter("logCompleteRecord").getValue().toString())) {
+                    Source sourceWithNS = new StreamSource(new StringReader(recordToLog.toString()));
+                    Result tempXsltResult = new StreamResult(serializedRecord);
+                    Parameter template = mc.getAxisService().getParameter("templateCreateMarcXml");
+                    Templates recordTemplate  =  ((Templates) template.getValue());
+                    recordTemplate.newTransformer().transform(sourceWithNS,tempXsltResult);
+                    serializedRecord = new StringWriter().append(Normalizer.normalize(serializedRecord.toString(), Normalizer.Form.NFC));
+                }
+
+
 
                 Document doc = new Document().
                         append("id", messageID).
@@ -559,6 +631,7 @@ public class SRWUpdateService {
                         append("updateDay", simpleFormatDay.format(currentDate)).
                         //append("marcStatus", leaderCharPos6).
                         append("timestamp", currentDate.getTime()).
+                        append("record",serializedRecord.toString()).
                         append("readTime", exactHumanReadbleTime.format(currentDate));
 
                 mongoCollection.insertOne(doc);
