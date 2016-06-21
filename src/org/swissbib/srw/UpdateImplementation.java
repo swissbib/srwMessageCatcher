@@ -4,7 +4,6 @@ import com.mongodb.client.MongoCollection;
 import org.apache.axiom.om.*;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.description.Parameter;
-import org.apache.axis2.jaxws.description.DescriptionFactory;
 import org.bson.Document;
 
 import javax.xml.namespace.QName;
@@ -95,15 +94,15 @@ public class UpdateImplementation {
                             responseElement = createUpdateReplaceResponse(completeRecordOmElement);
 
                         }
-                        logMessages(idText, actionText, completeRecordOmElement);
+                        logMessages(completeRecordOmElement);
                     } else {
 
-                        responseElement = createFailureResponse(idText, "replace or create message without complete record element", "info:srw/diagnostic/12/1");
+                        responseElement = createFailureResponse("replace or create message without complete record element", "info:srw/diagnostic/12/1");
                     }
 
 
                 } else {
-                    responseElement = createFailureResponse(idText, "replace or create message without record data", "info:srw/diagnostic/12/1");
+                    responseElement = createFailureResponse("replace or create message without record data", "info:srw/diagnostic/12/1");
                 }
 
 
@@ -158,7 +157,6 @@ public class UpdateImplementation {
 
 
 
-        final String TRANSFORM_TEMPLATE = "transformTemplate";
         final String RECORD_NS = "recordWithNamespaces";
         final String NORMALIZE_CHARS = "normalizeChars";
 
@@ -174,7 +172,11 @@ public class UpdateImplementation {
             Source sourceWithNS = new StreamSource(new StringReader(serializedRecord.toString()));
             serializedRecord = new StringWriter();
             Result tempXsltResult = new StreamResult(serializedRecord);
-            Parameter template = mc.getAxisService().getParameter(TRANSFORM_TEMPLATE);
+
+            Parameter template = this.updateType == SRWUpdateService.UpdateType.linked_swissbib ?
+                    mc.getAxisService().getParameter(ApplicationConstants.TRANSFORM_RDF_TEMPLATE.getValue()):
+                    mc.getAxisService().getParameter(ApplicationConstants.TRANSFORM_CLASSIC_TEMPLATE.getValue());
+
             Templates recordTemplate  =  ((Templates) template.getValue());
             recordTemplate.newTransformer().transform(sourceWithNS,tempXsltResult);
         }
@@ -187,7 +189,7 @@ public class UpdateImplementation {
             serializedRecord = new StringWriter().append(Normalizer.normalize(serializedRecord.toString(), Normalizer.Form.NFC));
         }
 
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream( recordFile),"UTF-8"));
+        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream( getFileForSerialization()),"UTF-8"));
         bw.write(serializedRecord.toString());
 
         bw.flush();
@@ -198,30 +200,35 @@ public class UpdateImplementation {
 
 
 
-    private void doSerialization (String recordID, OMElement completeRecord, File recordFile, boolean transformRecord) throws Exception {
-
-
-    }
-
-
     private File getFileForSerialization () {
 
 
-        final String FILE_PREFIX = "filePrefix";
-        final String FILE_SUFFIX = "fileSuffix";
-
         MessageContext mc = MessageContext.getCurrentMessageContext();
-
-
-        SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
-        //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
         Date currentDate = new Date();
-        String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
 
-        File recordFile = new File(getOutputDir(this.action) + timeFilePrefix + "_" +
-                mc.getAxisService().getParameter(FILE_PREFIX).getValue().toString() +
-                this.recordId + this.action.name() +
-                mc.getAxisService().getParameter(FILE_SUFFIX).getValue().toString());
+        File recordFile = null;
+        if (this.updateType == SRWUpdateService.UpdateType.swissbib_classic) {
+
+            SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
+            //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+            String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
+            recordFile = new File(getOutputDir(this.action) + timeFilePrefix + "_" +
+                    mc.getAxisService().getParameter(ApplicationConstants.FILE_PREFIX.getValue()).getValue().toString() +
+                    this.recordId +
+                    mc.getAxisService().getParameter(ApplicationConstants.FILE_SUFFIX.getValue()).getValue().toString());
+        } else {
+
+            //SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy_MM_dd:HH_mm_ss.SS");
+            SimpleDateFormat exactHumanReadbleTime = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
+            String timeFilePrefix = exactHumanReadbleTime.format(currentDate);
+            //linked serialization file doesn't need the FilePrefix because it's only to improve
+            //human readability
+            recordFile = new File(getOutputDir(this.action) + timeFilePrefix + "_" +
+                    this.recordId + "_" + this.action.name() +
+                    mc.getAxisService().getParameter(ApplicationConstants.FILE_SUFFIX.getValue()).getValue().toString());
+
+        }
+
 
         return recordFile;
 
@@ -343,18 +350,14 @@ public class UpdateImplementation {
         return responseElement;
     }
 
-    private void  logMessages (String messageID, String actionText, OMElement recordToLog) {
+    private void  logMessages (OMElement recordToLog) {
 
-        final String ACTIVE_MONGO_COLLECTION = "activeMongoCollection";
-        final String LOG_MESSAGES  = "logMessages";
+        if ( this.loggingForMessageTypeActivated()) {
 
-
-        try {
-            MessageContext mc =  MessageContext.getCurrentMessageContext();
-            //String test = mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString();
-            if ( Boolean.valueOf (mc.getAxisService().getParameter(LOG_MESSAGES).getValue().toString())) {
-
-                MongoCollection<Document> mongoCollection = (MongoCollection<Document>) mc.getAxisService().getParameter(ACTIVE_MONGO_COLLECTION).getValue();
+            try {
+                MessageContext mc = MessageContext.getCurrentMessageContext();
+                MongoCollection<Document> mongoCollection = (MongoCollection<Document>) mc.getAxisService().
+                        getParameter(ApplicationConstants.ACTIVE_MONGO_COLLECTION.getValue());
 
                 //SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
                 SimpleDateFormat simpleFormatDay = new SimpleDateFormat("yyyy-MM-dd");
@@ -366,40 +369,49 @@ public class UpdateImplementation {
                 StringWriter serializedRecord = new StringWriter();
 
                 boolean logCompleteRecord = this.updateType == SRWUpdateService.UpdateType.swissbib_classic ?
-                        Boolean.valueOf(mc.getAxisService().getParameter(ApplicationConstants.LOG_COMPLETE_RECORD_CLASSIC.getValue()).getValue().toString()):
+                        Boolean.valueOf(mc.getAxisService().getParameter(ApplicationConstants.LOG_COMPLETE_RECORD_CLASSIC.getValue()).getValue().toString()) :
                         Boolean.valueOf(mc.getAxisService().getParameter(ApplicationConstants.LOG_COMPLETE_RECORD_RDF.getValue()).getValue().toString());
 
                 if (logCompleteRecord) {
                     Source sourceWithNS = new StreamSource(new StringReader(recordToLog.toString()));
                     Result tempXsltResult = new StreamResult(serializedRecord);
                     Parameter template = mc.getAxisService().getParameter("templateCreateMarcXml");
-                    Templates recordTemplate  =  ((Templates) template.getValue());
-                    recordTemplate.newTransformer().transform(sourceWithNS,tempXsltResult);
+                    Templates recordTemplate = ((Templates) template.getValue());
+                    recordTemplate.newTransformer().transform(sourceWithNS, tempXsltResult);
                     serializedRecord = new StringWriter().append(Normalizer.normalize(serializedRecord.toString(), Normalizer.Form.NFC));
                 }
 
 
-
                 Document doc = new Document().
-                        append("id", messageID).
-                        append("action", actionText).
+                        append("id", this.recordId).
+                        append("action", this.actionText).
                         append("updateDay", simpleFormatDay.format(currentDate)).
                         //append("marcStatus", leaderCharPos6).
                                 append("timestamp", currentDate.getTime()).
-                                append("record",serializedRecord.toString()).
+                                append("record", serializedRecord.toString()).
                                 append("readTime", exactHumanReadbleTime.format(currentDate));
 
                 mongoCollection.insertOne(doc);
-
-
+            } catch (Throwable thr) {
+                System.out.println("Exception  trying to write log message into Mongo DB for id: " + this.recordId + " action: " + actionText);
+                System.out.print(thr.getMessage());
             }
-        } catch (Throwable thr) {
-            System.out.println("Exception  trying to write log message into Mongo DB for id: " + messageID + " action: " + actionText);
-            System.out.print(thr.getMessage());
+
+
         }
 
 
 
+    }
+
+    private boolean loggingForMessageTypeActivated() {
+
+        MessageContext mc =  MessageContext.getCurrentMessageContext();
+
+        return this.updateType == SRWUpdateService.UpdateType.linked_swissbib &&
+                Boolean.valueOf(mc.getAxisService().getParameter(ApplicationConstants.LOG_MESSAGES_LINKED.getValue()).getValue().toString()) ||
+                this.updateType == SRWUpdateService.UpdateType.swissbib_classic &&
+                        Boolean.valueOf(mc.getAxisService().getParameter(ApplicationConstants.LOG_MESSAGES_CLASSIC.getValue()).getValue().toString());
 
 
     }

@@ -69,7 +69,6 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String DEL_DIR  = "deleteDir";
         final String CREATE_DIR = "createDir";
         final String DEL_PATTERN = "deletePattern";
-        final String TRANSFORM_TEMPLATE = "transformTemplate";
         final String FILE_PREFIX = "filePrefix";
         final String FILE_SUFFIX = "fileSuffix";
         final String RECORD_NS = "recordWithNamespaces";
@@ -78,7 +77,6 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String TRANSFORM_CLASSIC_RECORD =  "transformClassicRecord";
         final String TRANSFORM_RDF_RECORD =  "transformRdfRecord";
 
-        final String LOG_MESSAGES  = "logMessages";
         final String MONGO_CLIENT  = "MONGO.CLIENT";
         final String MONGO_AUTHENTICATION  = "MONGO.AUTHENTICATION";
         final String MONGO_DB  = "MONGO.DB";
@@ -139,17 +137,23 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
             Parameter recordInResponse = axisService.getParameter(RECORD_IN_RESPONSE);
             axisService.addParameter(recordInResponse);
 
-            String transformTemplate = axisService.getParameter(TRANSFORM_TEMPLATE).getValue().toString();
-
+            String transformTemplate = axisService.getParameter(ApplicationConstants.TRANSFORM_CLASSIC_TEMPLATE.getValue()).
+                    getValue().toString();
             InputStream stream = getClass().getClassLoader().getResourceAsStream(transformTemplate);
-
             StreamSource source = new StreamSource(stream);
             TransformerFactory transformerFactory = TransformerFactory.newInstance();
             //Transformer transform = transformerFactory.newTransformer(source);
             Templates recordTransformer = transformerFactory.newTemplates(source);
+            axisService.addParameter(new Parameter(ApplicationConstants.TRANSFORM_CLASSIC_TEMPLATE.getValue(),recordTransformer));
 
-            axisService.addParameter(new Parameter(TRANSFORM_TEMPLATE,recordTransformer));
 
+            String transformRdfTemplate = axisService.getParameter(ApplicationConstants.TRANSFORM_RDF_TEMPLATE.getValue()).getValue().toString();
+            InputStream streamRdfTemplate = getClass().getClassLoader().getResourceAsStream(transformRdfTemplate);
+            StreamSource sourceRdf = new StreamSource(streamRdfTemplate);
+            TransformerFactory transformerRDFFactory = TransformerFactory.newInstance();
+            //Transformer transform = transformerFactory.newTransformer(sourceRdf);
+            Templates recordRDFTransformer = transformerRDFFactory.newTemplates(sourceRdf);
+            axisService.addParameter(new Parameter(ApplicationConstants.TRANSFORM_RDF_TEMPLATE.getValue(),recordRDFTransformer));
 
 
             String recordToLog = axisService.getParameter(TEMPLATE_CREATE_MARCXML).getValue().toString();
@@ -167,9 +171,19 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
 
             //logging of messages?
-            Parameter logging = axisService.getParameter(LOG_MESSAGES);
+            Parameter loggingClassic = axisService.getParameter(ApplicationConstants.LOG_MESSAGES_CLASSIC.getValue());
+            Parameter loggingLinked = axisService.getParameter(ApplicationConstants.LOG_MESSAGES_LINKED.getValue());
 
-            boolean logActive =   Boolean.valueOf(logging.getValue().toString());
+            axisService.addParameter(new Parameter(ApplicationConstants.LOG_MESSAGES_CLASSIC.getValue(),
+                    Boolean.valueOf(loggingClassic.getValue().toString())));
+
+            axisService.addParameter(new Parameter(ApplicationConstants.LOG_MESSAGES_LINKED.getValue(),
+                    Boolean.valueOf(loggingLinked.getValue().toString())));
+
+
+            boolean logActive =   Boolean.valueOf(loggingClassic.getValue().toString()) ||
+                    Boolean.valueOf(loggingLinked.getValue().toString());
+
             if (logActive) {
 
                 try {
@@ -203,27 +217,29 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
                     MongoDatabase messageDb = mClient.getDatabase(mongoDB[0]);
                     MongoCollection<Document> messageCollection =  messageDb.getCollection(mongoDB[1]);
                     axisService.addParameter(new Parameter(ACTIVE_MONGO_COLLECTION,messageCollection));
-                    axisService.addParameter(new Parameter(LOG_MESSAGES,"true"));
                     axisService.addParameter(new Parameter(ACTIVE_MONGO_CLIENT,mClient));
 
-                    axisService.addParameter(new Parameter(ACTIVE_MONGO_COLLECTION,messageCollection));
-                    axisService.addParameter(new Parameter(LOG_MESSAGES,"true"));
 
-                    System.out.println("With MOngo DB connected");
+                    System.out.println("With Mongo DB connected");
 
 
 
                 } catch (Exception exc) {
 
-                    System.out.println("in Exception");
-
-                    axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
+                    System.out.println("in Exception after trying to connect to Mongo DB");
                     exc.printStackTrace();
+
+                    axisService.removeParameter(loggingClassic);
+                    axisService.removeParameter(loggingLinked);
+                    axisService.addParameter(new Parameter(ApplicationConstants.LOG_MESSAGES_CLASSIC.getValue(),
+                            false));
+
+                    axisService.addParameter(new Parameter(ApplicationConstants.LOG_MESSAGES_LINKED.getValue(),
+                            false));
+
                 }
 
 
-            } else {
-                axisService.addParameter(new Parameter(LOG_MESSAGES,"false"));
             }
 
 

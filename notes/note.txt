@@ -74,3 +74,20 @@ curl -H "Content-Type: text/xml; charset=utf-8" \
      -X POST http://localhost:8080/axis2/services/UpdateService/update
 
 
+curl -H "Content-Type: text/xml; charset=utf-8" \
+     -H "SOAPAction:" \
+     -d @REQ_15532389X.xml \
+     -X POST http://localhost:8080/axis2/services/UpdateService/updateRDF
+
+
+1) Formatierung Zeiten bei Dateiname
+Ich werde wohl unterschiedliche Formate für linked und classic brauchen. Jetzt mit Unterstrich. Dies wird Sebastian so aber wohl nicht
+ verarbeiten können. Andererseits darf ich den bisherigen produktiven Prozess nicht brechen.
+
+
+ 2) serializeRecord
+ ist das richtig?
+        if (transformRecord && !Boolean.valueOf(mc.getAxisService().getParameter(RECORD_NS).getValue().toString())) {
+
+
+
