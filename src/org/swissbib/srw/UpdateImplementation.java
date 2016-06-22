@@ -357,7 +357,7 @@ public class UpdateImplementation {
             try {
                 MessageContext mc = MessageContext.getCurrentMessageContext();
                 MongoCollection<Document> mongoCollection = (MongoCollection<Document>) mc.getAxisService().
-                        getParameter(ApplicationConstants.ACTIVE_MONGO_COLLECTION.getValue());
+                        getParameter(ApplicationConstants.ACTIVE_MONGO_COLLECTION.getValue()).getValue();
 
                 //SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
                 SimpleDateFormat simpleFormatDay = new SimpleDateFormat("yyyy-MM-dd");
