@@ -1,19 +1,27 @@
 <project name="SimpleHotelService" basedir="../" default="ErzeugeAAR">
 
+
+    <property environment="env"/>
+    <property file="${env.PROPERTY_FILE_CATCHER}" />
+
+    <property name="builder" value="project swissbib www.swissbib.org, UB Basel, author: ${author}" />
+
+
+
     <property name="src.dir" value="src" />
     <property name="aar.dir" value="aar" />
     <property name="bin.dir" value="bin" />
     <property name="conf.dir" value="conf" />
-    <property name="custom.libs" value="customLibs/new" />
+    <!-- <property name="custom.libs" value="${??}" /> -->
 
     <property name="deploy.file" value="SRWSearchDocumentsCatcher.aar" />
-    <property name="deploy.path" value="/home/swissbib/temp/testaxis2" />
+    <property name="deploy.path" value="${deploy.path}" />
 
     <path id="axisclasspath">
-        <fileset dir="/home/swissbib/Downloads/axis2/axis2-1.6.2.bin/lib">
+        <fileset dir="${custom.libs}/axis2-1.6.2">
             <include name="*.jar"/>
         </fileset>
-        <fileset dir="${custom.libs}/lib">
+        <fileset dir="${custom.libs}/mongo">
             <include name="*.jar"/>
         </fileset>
     </path>
@@ -29,6 +37,8 @@
        <mkdir dir="${aar.dir}" />
         <mkdir dir="${aar.dir}/META-INF" />
         <mkdir dir="${bin.dir}" />
+        <mkdir dir="${bin.dir}/lib" />
+        <mkdir dir="${bin.dir}/war"/>
 
 
         <javac debug="on"
@@ -47,12 +57,15 @@
 
             <fileset dir="${src.dir}"
                      includes="**/*.xslt"/>
-            <fileset dir="${custom.libs}"
-                     includes="**/*"/>
-
 
         </copy>
 
+        <copy todir="${bin.dir}/lib" preservelastmodified="true">
+
+            <fileset dir="${custom.libs}/mongo"
+                     includes="**/*"/>
+
+        </copy>
 
         <copy todir="${aar.dir}" preservelastmodified="true">
 
