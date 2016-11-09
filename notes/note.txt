@@ -101,4 +101,19 @@ Ich werde wohl unterschiedliche Formate für linked und classic brauchen. Jetzt 
 
 
 
+ Start debugging
+ cd /home/swissbib/environment/tools/java.tools/apache-tomcat-8.0.33.messageCatcher/bin
+ source setenv.not.used.sh
+ ./catalina.sh run
+
+ record: auf sb-s13
+ cd /swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/analyze.not.wellformed/soap.messages/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/loadUpdate
+
+ deleted record
+ <mx:leader>     dam a22     5u 4500</mx:leader>
+ <mx:leader>     cam a22     1i 4500</mx:leader>
+
+
+
+
 

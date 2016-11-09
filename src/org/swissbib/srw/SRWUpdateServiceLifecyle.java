@@ -46,7 +46,7 @@ import java.util.Arrays;
  *
  * @author Guenter Hipler  <guenter.hipler@unibas.ch>
  * @link http://www.swissbib.org
- * @link https://github.com/swissbib/xml2SearchDoc
+ * @link https://github.com/swissbib/srwMessageCatcher
  */
 public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 

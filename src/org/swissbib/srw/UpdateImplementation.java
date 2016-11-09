@@ -18,8 +18,34 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.regex.Pattern;
 
+
 /**
- * Created by swissbib on 6/20/16.
+ * [...description of the type ...]
+ * <p/>
+ * <p/>
+ * <p/>
+ * Copyright (C) project swissbib, University Library Basel, Switzerland
+ * http://www.swissbib.org  / http://www.swissbib.ch / http://www.ub.unibas.ch
+ * <p/>
+ * Date: 6/20/16
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2,
+ * as published by the Free Software Foundation.
+ * <p/>
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * <p/>
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ * <p/>
+ * license:  http://opensource.org/licenses/gpl-2.0.php GNU General Public License
+ *
+ * @author Guenter Hipler  <guenter.hipler@unibas.ch>
+ * @link http://www.swissbib.org
+ * @link https://github.com/swissbib/srwMessageCatcher
  */
 public class UpdateImplementation {
 
@@ -31,6 +57,8 @@ public class UpdateImplementation {
     private String recordId;
     private SRWUpdateService.SRUActions action;
     private boolean transformRecord;
+    private boolean mismatchLeaderDeleteMessageType = false;
+    private String leaderTypeChar = "";
 
 
     private final String CHECK_LEADER_FOR_DELETE = "checkLeaderForDelete";
@@ -80,12 +108,10 @@ public class UpdateImplementation {
 
                     if (null != completeRecordOmElement) {
                         if (pDeleteAction.matcher(actionText).find() || (Boolean.valueOf(mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString()) && checkLeaderForDelete(completeRecordOmElement))) {
-                            //Todo: write log
-                            //serializeDeleteRecord(idText,record);
                             serializeRecord(completeRecordOmElement);
-                            responseElement = createDeleteResponse();
                             //we create a different responseElement for delete messages
                             //why? is this a commitment with OCLC (H.v.E) ??
+                            responseElement = createDeleteResponse();
                         } else {
 
 
@@ -143,13 +169,17 @@ public class UpdateImplementation {
 
     private boolean checkLeaderForDelete(OMElement completeRecordOmElement) {
 
-        //OMElement leaderOME =  completeRecordOmElement.getFirstChildWithName(new QName(nsURImxSLIM,"leader"));
-        //String leaderChar = leaderOME != null ? leaderOME.getText().substring(5,6): "";
-        //Todo: implement this method
+        OMElement leaderOME =  completeRecordOmElement.getFirstChildWithName(new QName(SRWUpdateService.SRUNamespaces.marc21Slim.getValue(),"leader"));
+        String leaderChar = leaderOME != null ? leaderOME.getText().substring(5,6): "";
+        this.mismatchLeaderDeleteMessageType = false;
+        if (leaderChar.equalsIgnoreCase("d") && !this.actionText.equalsIgnoreCase(SRWUpdateService.SRUActions.delete.getValue())) {
+            this.mismatchLeaderDeleteMessageType = true;
+            this.actionText = SRWUpdateService.SRUActions.delete.getValue();
+            this.action = SRWUpdateService.SRUActions.delete;
+        }
 
-        //this was implemented and used before CBS chanegd the behaviour and has sent (hopefully) always correct delete messages
-        //we are going to use it again once the CBS implementation is again wrong
-        return false;
+        this.leaderTypeChar = leaderChar;
+        return this.mismatchLeaderDeleteMessageType;
     }
 
 
@@ -385,8 +415,9 @@ public class UpdateImplementation {
                 Document doc = new Document().
                         append("id", this.recordId).
                         append("action", this.actionText).
+                        append("marcStatus", this.leaderTypeChar).
+                        append("messageMismatch", String.valueOf(this.mismatchLeaderDeleteMessageType)).
                         append("updateDay", simpleFormatDay.format(currentDate)).
-                        //append("marcStatus", leaderCharPos6).
                                 append("timestamp", currentDate.getTime()).
                                 append("record", serializedRecord.toString()).
                                 append("readTime", exactHumanReadbleTime.format(currentDate));
