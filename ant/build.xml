@@ -42,8 +42,8 @@
 
 
         <javac debug="on"
-               target="1.8"
-               source="1.8"
+               target="${javacTarget}"
+               source="${javacTarget}"
                fork="true"
                destdir="${bin.dir}"
                srcdir="${src.dir}"
@@ -89,7 +89,7 @@
 
     <target name="ErzeugeAAR" depends="Structure"
             description="[AXIS2] AAR-File erzeugen">
-        <jar destfile="${deploy.path}/${deploy.file}">
+        <jar  destfile="${deploy.path}/${deploy.file}">
 
             <fileset dir="${aar.dir}">
 
