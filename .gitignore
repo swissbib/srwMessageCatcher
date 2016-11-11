@@ -1,9 +1,10 @@
 !.gitignore
 .idea
 customLibs
-
+conf/testconfigs
 conf/services.nogit*
+testrecords/cracked.link
 bin
-
+out
 notes/nogit.*
 

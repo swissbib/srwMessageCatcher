@@ -39,7 +39,7 @@ update
 
 curl -H "Content-Type: text/xml; charset=utf-8" \
      -H "SOAPAction:" \
-     -d REQ_094491089.xml \
+     -d @REQ_094491089.xml \
      -X POST http://localhost:8080/axis2/services/services/UpdateService/update
 
 
