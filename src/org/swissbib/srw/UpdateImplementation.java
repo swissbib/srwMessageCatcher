@@ -16,6 +16,8 @@ import java.io.*;
 import java.text.Normalizer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.regex.Pattern;
 
 
@@ -59,6 +61,7 @@ public class UpdateImplementation {
     private boolean transformRecord;
     private boolean mismatchLeaderDeleteMessageType = false;
     private String leaderTypeChar = "";
+    private boolean processedDelayed = false;
 
 
     private final String CHECK_LEADER_FOR_DELETE = "checkLeaderForDelete";
@@ -107,6 +110,8 @@ public class UpdateImplementation {
 
 
                     if (null != completeRecordOmElement) {
+
+                        this.checkRecordForDelayedProcessing(completeRecordOmElement);
                         if (pDeleteAction.matcher(actionText).find() || (Boolean.valueOf(mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString()) && checkLeaderForDelete(completeRecordOmElement))) {
                             serializeRecord(completeRecordOmElement);
                             //we create a different responseElement for delete messages
@@ -150,17 +155,22 @@ public class UpdateImplementation {
         MessageContext mc =  MessageContext.getCurrentMessageContext();
         String outputDir = null;
 
+        if (this.processedDelayed)
+            outputDir = mc.getAxisService().getParameter(ApplicationConstants.PROCESSED_DELAYED_DIR.getValue()).getValue().toString();
+        else {
 
-        switch (action) {
-            case create:
-                outputDir = mc.getAxisService().getParameter("createDir").getValue().toString();
-                break;
-            case replace:
-                outputDir = mc.getAxisService().getParameter("updateDir").getValue().toString();
-                break;
-            case delete:
-                outputDir = mc.getAxisService().getParameter("deleteDir").getValue().toString();
-                break;
+
+            switch (action) {
+                case create:
+                    outputDir = mc.getAxisService().getParameter("createDir").getValue().toString();
+                    break;
+                case replace:
+                    outputDir = mc.getAxisService().getParameter("updateDir").getValue().toString();
+                    break;
+                case delete:
+                    outputDir = mc.getAxisService().getParameter("deleteDir").getValue().toString();
+                    break;
+            }
         }
 
         return outputDir;
@@ -445,6 +455,53 @@ public class UpdateImplementation {
                         Boolean.valueOf(mc.getAxisService().getParameter(ApplicationConstants.LOG_MESSAGES_CLASSIC.getValue()).getValue().toString());
 
 
+    }
+
+    private void checkRecordForDelayedProcessing(OMElement recordToCheck) {
+
+        MessageContext mc = MessageContext.getCurrentMessageContext();
+
+        HashMap<String, String> checkForDelay = (HashMap<String, String>) mc.getAxisService().getParameter(ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue()).getValue();
+
+        boolean isDelayed = Boolean.valueOf(checkForDelay.get("isDelayed"));
+
+        if (isDelayed) {
+            String code = checkForDelay.get("code");
+            String tag = checkForDelay.get("tag");
+            String fieldType = checkForDelay.get("fieldType");
+            String textValue =  checkForDelay.get("value");
+
+            ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue();
+            Iterator iter = recordToCheck.getChildrenWithName(
+                    new QName(SRWUpdateService.SRUNamespaces.marc21Slim.getValue(), fieldType));
+
+            while (iter.hasNext()) {
+
+                OMElement dataElement = (OMElement) iter.next();
+                OMAttribute tagAttribute = dataElement.getAttribute(new QName("tag"));
+                if (null != tagAttribute) {
+                    if (tagAttribute.getAttributeValue().equalsIgnoreCase(tag)) {
+                        Iterator iSubfields = dataElement.getChildrenWithName(new QName(SRWUpdateService.SRUNamespaces.marc21Slim.getValue(),
+                                "subfield"));
+
+                        while (iSubfields.hasNext()) {
+                            OMElement subFieldElement = (OMElement) iSubfields.next();
+                            OMAttribute subAttribute = subFieldElement.getAttribute(new QName("code"));
+                            if (null != subAttribute && subAttribute.getAttributeValue().equalsIgnoreCase(code)) {
+                                if (subFieldElement.getText().toLowerCase().contains(textValue.toLowerCase())) {
+                                    this.processedDelayed = true;
+                                    break;
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+
+            }
+
+        }
     }
 
 

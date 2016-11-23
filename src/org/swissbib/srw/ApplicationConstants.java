@@ -39,7 +39,9 @@ public enum ApplicationConstants {
     FILE_SUFFIX("fileSuffix"),
     TRANSFORM_CLASSIC_TEMPLATE("transformClassicTemplate"),
     TRANSFORM_RDF_TEMPLATE("transformRdfTemplate"),
-    ACTIVE_MONGO_COLLECTION("activeMongoCollection");
+    ACTIVE_MONGO_COLLECTION("activeMongoCollection"),
+    PARSE_DELAYED_PROCESSING  ("PARSE.FOR.DELAYED.PROCESSING"),
+    PROCESSED_DELAYED_DIR ("processedDelayedDir");
 
 
 

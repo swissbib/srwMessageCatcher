@@ -18,6 +18,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * [...description of the type ...]
@@ -85,7 +86,6 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
         final String TEMPLATE_CREATE_MARCXML =  "templateCreateMarcXml";
 
 
-
         try {
             Parameter updDir = axisService.getParameter(UPD_DIR);
             axisService.addParameter(updDir);
@@ -97,6 +97,11 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
             Parameter delDir = axisService.getParameter(DEL_DIR);
             axisService.addParameter(delDir);
+
+
+            Parameter processedDelayedDir = axisService.getParameter(ApplicationConstants.PROCESSED_DELAYED_DIR.getValue());
+            axisService.addParameter(processedDelayedDir);
+
 
             Parameter filePrefix = axisService.getParameter(FILE_PREFIX);
             axisService.addParameter(filePrefix);
@@ -136,6 +141,28 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
             Parameter recordInResponse = axisService.getParameter(RECORD_IN_RESPONSE);
             axisService.addParameter(recordInResponse);
+
+            Parameter parseDelayedProcessing = axisService.getParameter(ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue());
+            String[] delayedProcessingParams =  parseDelayedProcessing.getValue().toString().split("###");
+            if (delayedProcessingParams.length == 5) {
+                HashMap<String,String> dParams = new HashMap<>();
+                dParams.put("isDelayed",delayedProcessingParams[0]);
+                dParams.put("fieldType",delayedProcessingParams[1]);
+                dParams.put("tag",delayedProcessingParams[2]);
+                dParams.put("code",delayedProcessingParams[3]);
+                dParams.put("value",delayedProcessingParams[4]);
+                axisService.addParameter(ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue(),dParams);
+            } else {
+                HashMap<String,String> dParams = new HashMap<>();
+                dParams.put("isDelayed","FALSE");
+                dParams.put("fieldType","");
+                dParams.put("tag","");
+                dParams.put("code","");
+                dParams.put("value","");
+                axisService.addParameter(ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue(),dParams);
+
+            }
+
 
             String transformTemplate = axisService.getParameter(ApplicationConstants.TRANSFORM_CLASSIC_TEMPLATE.getValue()).
                     getValue().toString();
