@@ -1,10 +1,7 @@
-!.gitignore
-.idea
-customLibs
-conf/testconfigs
-conf/services.nogit*
-testrecords/cracked.link
-bin
-out
-notes/nogit.*
+# Ignore Gradle project-specific cache directory
+.gradle
 
+# Ignore Gradle build output directory
+build
+
+conf/**/*nogit*

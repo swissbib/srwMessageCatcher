@@ -10,15 +10,11 @@
     </operation>
 
     <!-- directory for update messages - acction info:srw/action/1/replace-->
-    <parameter name="updateDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/updateDir</parameter>
+    <parameter name="updateDir">/swissbib_index/lsbPlatform/data/createDir/</parameter>
     <!-- directory for delete messages - acction info:srw/action/1/delete-->
-    <parameter name="deleteDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/deleteDir/</parameter>
+    <parameter name="deleteDir">/swissbib_index/lsbPlatform/data/deleteDir/</parameter>
     <!-- directory for new created messages - acction info:srw/action/1/create-->
-    <parameter name="createDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/updateDir</parameter>
-
-    <!-- directory for messages which shouldn't be deleted immediately-->
-    <parameter name="processedDelayedDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/processDelayedDir/</parameter>
-
+    <parameter name="createDir">/swissbib_index/lsbPlatform/data/createDir/</parameter>
     <!-- template used to transform messages for classic swissbib document processing / removes soap envelopes tags
      but retains namespaces / could be changed in the future; This template is used when transformClassicRecord is set to true -->
     <parameter name="transformClassicTemplate">org/swissbib/srw/createRecordWithOutNamespaces.xslt</parameter>
@@ -56,17 +52,18 @@
     <parameter name="templateCreateMarcXml">org/swissbib/srw/createRecordForRDFPipeline.xslt</parameter>
 
     <!-- host and port number used by the MOngo Client in case logging of messages is activated-->
-    <parameter name="MONGO.CLIENT">[some host]###[some port]</parameter>
+    <parameter name="MONGO.CLIENT">sb-db4.swissbib.unibas.ch###29017</parameter>
 
     <!-- indicated the credentials and authentication database in case logging is activated
      structuture: [authentication-database]###[user used for authentication]###[password]
      if authentication for the MongoDB is disabled please use an empty tag
      -->
-    <parameter name="MONGO.AUTHENTICATION">admin###admin###[some password]</parameter>
+    <!--<parameter name="MONGO.AUTHENTICATION">admin###admin###uHiwkp!5ZjWl</parameter>-->
+    <parameter name="MONGO.AUTHENTICATION"/>
     <!--<parameter name="MONGO.AUTHENTICATION"/> -->
     <!--<parameter name="MONGO.DB">srwMessageLogging###sourceBB</parameter> -->
     <!-- Application MongoDB and and collection used for messages-->
-    <parameter name="MONGO.DB">srwMessageLogging###sourceGreenTest</parameter>
+    <parameter name="MONGO.DB">srwMessageLogging###sourceGreen</parameter>
 
     <!-- Hans van Eck, OCLC Leiden 2013-11-06
     The record in the response is currently ignored.
@@ -76,11 +73,6 @@
     -->
     <!-- not clear how this is used-->
     <parameter name="includeRecordInResponse">TRUE</parameter>
-
-    <!-- information used to look up for records which should be processed delayed
-    first parameter indicates if this functionality is activated-->
-    <parameter name="PARSE.FOR.DELAYED.PROCESSING">FALSE###datafield###035###a###NATIONALLICENCE</parameter>
-
 
 
 </service>

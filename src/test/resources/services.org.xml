@@ -1,0 +1,47 @@
+<service name="UpdateService" scope="application"
+         class="org.swissbib.srw.SRWUpdateServiceLifecyle"
+        >
+    <description>swissbib SRW search documents record catcher</description>
+
+    <parameter name="ServiceClass">org.swissbib.srw.SRWUpdateService</parameter>
+
+    <operation name="update">
+        <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
+    </operation>git add
+
+    <parameter name="updateDir">[path to store the replace and create messages]</parameter>
+    <parameter name="deleteDir">[path to store the delete messages]</parameter>
+    <parameter name="transformTemplate">org/swissbib/srw/createRecordWithOutNamespaces.xslt</parameter>
+    <parameter name="filePrefix">REQ_</parameter>
+    <parameter name="fileSuffix">.xml</parameter>
+    <parameter name="recordWithNamespaces">FALSE</parameter>
+    <parameter name="normalizeChars">TRUE</parameter>
+    <parameter name="logMessages">FALSE</parameter>
+    <parameter name="checkLeaderForDelete">FALSE</parameter>
+
+    <parameter name="MONGO.CLIENT">[mongo hostname]###[mongo port]</parameter>
+
+    <!-- <parameter name="MONGO.CLIENT">localhost###29017</parameter> -->
+    <parameter name="MONGO.AUTHENTICATION">[authentication db]###[user]###[pasword]</parameter>
+    <!--<parameter name="MONGO.DB">srwMessageLogging###sourceBB</parameter> -->
+    <parameter name="MONGO.DB">[mongo db]###[collection]</parameter>
+
+    <!--
+    or empty tags if no mongo logging
+    <parameter name="MONGO.CLIENT"/>
+
+    <parameter name="MONGO.AUTHENTICATION"/
+    <parameter name="MONGO.DB"/>
+
+    -->
+
+    <!-- Hans van Eck, OCLC Leiden 2013-11-06
+    The record in the response is currently ignored.
+    There might be a requirement that we use it in the future, but it will likely still be optional.
+    GH:
+    so we can exclude the original record content in response
+    -->
+    <parameter name="includeRecordInResponse">TRUE</parameter>
+
+
+</service>

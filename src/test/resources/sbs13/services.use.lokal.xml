@@ -1,0 +1,86 @@
+<service name="UpdateService" scope="application"
+         class="org.swissbib.srw.SRWUpdateServiceLifecyle"
+>
+    <description>swissbib SRW search documents record catcher</description>
+
+    <parameter name="ServiceClass">org.swissbib.srw.SRWUpdateService</parameter>
+
+    <operation name="update">
+        <messageReceiver class="org.apache.axis2.receivers.RawXMLINOutMessageReceiver"/>
+    </operation>
+
+    <!-- directory for update messages - acction info:srw/action/1/replace-->
+    <parameter name="updateDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/updateDir/</parameter>
+    <!-- directory for delete messages - acction info:srw/action/1/delete-->
+    <parameter name="deleteDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/deleteDir/</parameter>
+    <!-- directory for new created messages - acction info:srw/action/1/create-->
+    <parameter name="createDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/updateDir/</parameter>
+
+    <!-- directory for messages which shouldn't be deleted immediately-->
+    <parameter name="processedDelayedDir">/swissbib_index/solrDocumentProcessing/FrequentInitialPreProcessing/data/update/processDelayedDir/</parameter>
+    <!-- template used to transform messages for classic swissbib document processing / removes soap envelopes tags
+     but retains namespaces / could be changed in the future; This template is used when transformClassicRecord is set to true -->
+    <parameter name="transformClassicTemplate">org/swissbib/srw/createRecordWithOutNamespaces.xslt</parameter>
+    <!-- template used to transform messages for linked swissbib platform / structure in pure MarcXML format and a type
+     attribute as part of the recod tag is included which is needed by Metafacture which is used when transformRdfRecord is set
+     to true-->
+    <parameter name="transformRdfTemplate">org/swissbib/srw/createRecordForRDFPipeline.xslt</parameter>
+    <!-- Prefix for files created for classic document processing / not used in linked platform-->
+    <parameter name="filePrefix">REQ_</parameter>
+    <!-- suffix for created files-->
+    <parameter name="fileSuffix">.xml</parameter>
+    <!-- should we remove namespaces / I guess this is currebtly not proper implemented-->
+    <parameter name="recordWithNamespaces">FALSE</parameter>
+    <!-- messages sent by CBS neeed this normalization. In classic documentprocessing it is done later but we want to do it
+    already in the catcher component for linked-->
+    <parameter name="normalizeChars">TRUE</parameter>
+    <!-- are we going to log messages for classic document processing in general-->
+    <parameter name="logMessagesClassic">TRUE</parameter>
+    <!-- are we going to log messages for the linked platform - in general-->
+    <parameter name="logMessagesLinked">TRUE</parameter>
+    <!-- should leader be analyzed for deleted records due to a former bug in CBS?-->
+    <parameter name="checkLeaderForDelete">TRUE</parameter>
+    <!-- are we going to transform the sent record in classic document processing? -->
+    <parameter name="transformClassicRecord">TRUE</parameter>
+    <!-- are we going to transform the sent record in linked processing? -->
+    <parameter name="transformRdfRecord">TRUE</parameter>
+    <!-- additional parameter for logging. If logMessageClassic is set to true this parameter indicates to include the complete raw record
+    which needs some storage space / not needed for classic document processing-->
+    <parameter name="logCompleteRecordClassic">FALSE</parameter>
+    <!-- additional parameter for logging. If logMessagesLinked is set to true this parameter indicates to include the complete raw record
+    which needs some storage space / we need this in the linked platform to track record movement-->
+    <parameter name="logCompleteRecordRDF">TRUE</parameter>
+
+    <!-- do we need this??? -->
+    <parameter name="templateCreateMarcXml">org/swissbib/srw/createRecordForRDFPipeline.xslt</parameter>
+
+    <!-- host and port number used by the MOngo Client in case logging of messages is activated-->
+    <!--<parameter name="MONGO.CLIENT">sb-db6.swissbib.unibas.ch###29017</parameter> -->
+    <parameter name="MONGO.CLIENT">localhost###29017</parameter>
+
+    <!-- indicated the credentials and authentication database in case logging is activated
+     structuture: [authentication-database]###[user used for authentication]###[password]
+     if authentication for the MongoDB is disabled please use an empty tag
+     -->
+    <!--<parameter name="MONGO.AUTHENTICATION">admin###admin###4Gn61rO8jj753</parameter> -->
+    <parameter name="MONGO.AUTHENTICATION"/>
+    <!--<parameter name="MONGO.DB">srwMessageLogging###sourceBB</parameter> -->
+    <!-- Application MongoDB and and collection used for messages-->
+    <parameter name="MONGO.DB">srwMessageLogging###sourceGreen</parameter>
+
+    <!-- Hans van Eck, OCLC Leiden 2013-11-06
+    The record in the response is currently ignored.
+    There might be a requirement that we use it in the future, but it will likely still be optional.
+    GH:
+    so we can exclude the original record content in response
+    -->
+    <!-- not clear how this is used-->
+    <parameter name="includeRecordInResponse">TRUE</parameter>
+
+
+    <!-- information used to look up for records which should be processed delayed
+    first parameter indicates if this functionality is activated-->
+    <parameter name="PARSE.FOR.DELAYED.PROCESSING">FALSE###datafield###035###a###NATIONALLICENCE</parameter>
+
+
+</service>
