@@ -5,3 +5,12 @@
 build
 
 conf/**/*nogit*
+
+bin/
+conf/
+customLibs/
+gh/
+src/data/
+src/main/java/org/swissbib/srw/createRecordForRDFPipeline.xslt
+src/main/java/org/swissbib/srw/createRecordWithOutNamespaces.xslt
+
