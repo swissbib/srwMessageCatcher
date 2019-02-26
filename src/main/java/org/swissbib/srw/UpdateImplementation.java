@@ -76,9 +76,6 @@ public class UpdateImplementation {
         this.actionText = getActionText();
         this.recordId = getRecordId();
         this.action = SRWUpdateService.SRUActions.fromString(this.actionText);
-
-
-
     }
 
     private String getRecordId() {
