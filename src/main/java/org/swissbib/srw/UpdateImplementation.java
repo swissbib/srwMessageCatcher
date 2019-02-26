@@ -112,7 +112,9 @@ public class UpdateImplementation {
                     if (null != completeRecordOmElement) {
 
                         this.checkRecordForDelayedProcessing(completeRecordOmElement);
-                        if (pDeleteAction.matcher(actionText).find() || (Boolean.valueOf(mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString()) && checkLeaderForDelete(completeRecordOmElement))) {
+                        if (pDeleteAction.matcher(actionText).find() ||
+                                (Boolean.valueOf(mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString())
+                                        && checkLeaderForDelete(completeRecordOmElement))) {
                             serializeRecord(completeRecordOmElement);
                             //we create a different responseElement for delete messages
                             //why? is this a commitment with OCLC (H.v.E) ??
@@ -396,7 +398,7 @@ public class UpdateImplementation {
 
             try {
                 MessageContext mc = MessageContext.getCurrentMessageContext();
-                MongoCollection<Document> mongoCollection = (MongoCollection<Document>) mc.getAxisService().
+                @SuppressWarnings("unchecked") MongoCollection<Document> mongoCollection = (MongoCollection<Document>) mc.getAxisService().
                         getParameter(ApplicationConstants.ACTIVE_MONGO_COLLECTION.getValue()).getValue();
 
                 //SimpleDateFormat simpleFormat = new SimpleDateFormat("yyyy-mm-dd hh:mm:ss");
@@ -461,7 +463,8 @@ public class UpdateImplementation {
 
         MessageContext mc = MessageContext.getCurrentMessageContext();
 
-        HashMap<String, String> checkForDelay = (HashMap<String, String>) mc.getAxisService().getParameter(ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue()).getValue();
+        @SuppressWarnings("unchecked") HashMap<String, String> checkForDelay =
+                (HashMap<String, String>) mc.getAxisService().getParameter(ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue()).getValue();
 
         boolean isDelayed = Boolean.valueOf(checkForDelay.get("isDelayed"));
 
@@ -471,7 +474,6 @@ public class UpdateImplementation {
             String fieldType = checkForDelay.get("fieldType");
             String textValue =  checkForDelay.get("value");
 
-            ApplicationConstants.PARSE_DELAYED_PROCESSING.getValue();
             Iterator iter = recordToCheck.getChildrenWithName(
                     new QName(SRWUpdateService.SRUNamespaces.marc21Slim.getValue(), fieldType));
 

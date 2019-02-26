@@ -36,9 +36,9 @@
     already in the catcher component for linked-->
     <parameter name="normalizeChars">TRUE</parameter>
     <!-- are we going to log messages for classic document processing in general-->
-    <parameter name="logMessagesClassic">TRUE</parameter>
+    <parameter name="logMessagesClassic">FALSE</parameter>
     <!-- are we going to log messages for the linked platform - in general-->
-    <parameter name="logMessagesLinked">TRUE</parameter>
+    <parameter name="logMessagesLinked">FALSE</parameter>
     <!-- should leader be analyzed for deleted records due to a former bug in CBS?-->
     <parameter name="checkLeaderForDelete">FALSE</parameter>
     <!-- are we going to transform the sent record in classic document processing? -->

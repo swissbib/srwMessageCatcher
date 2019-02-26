@@ -60,6 +60,7 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
 
 
+    @SuppressWarnings("deprecation")
     @Override
     public void startUp(ConfigurationContext configurationContext, AxisService axisService) {
 
@@ -234,7 +235,8 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
                     MongoClient mClient = null;
 
                     if ( mongoAuthentication.length == 3 ) {
-                        MongoCredential credential = MongoCredential.createMongoCRCredential(mongoAuthentication[1], mongoAuthentication[0], mongoAuthentication[2].toCharArray());
+                        MongoCredential credential =
+                                MongoCredential.createMongoCRCredential(mongoAuthentication[1], mongoAuthentication[0], mongoAuthentication[2].toCharArray());
                         mClient = new MongoClient(server, Arrays.asList(credential));
                     } else {
                         mClient = new MongoClient( server );

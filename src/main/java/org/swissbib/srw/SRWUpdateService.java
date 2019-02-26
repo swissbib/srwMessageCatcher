@@ -1,6 +1,9 @@
 package org.swissbib.srw;
 
 import org.apache.axiom.om.*;
+import org.swissbib.linked.kafka.KafkaWriter;
+
+import java.util.HashMap;
 
 /**
  * [...description of the type ...]
@@ -112,6 +115,8 @@ public class SRWUpdateService {
      */
     public OMElement updateRDF (OMElement record) {
 
+        KafkaWriter kw = new KafkaWriter<HashMap>();
+
         OMElement responseElement = null;
 
         try {
@@ -142,12 +147,10 @@ public class SRWUpdateService {
             UpdateImplementation updateImplementation = new UpdateImplementation(record, UpdateType.swissbib_classic);
             responseElement = updateImplementation.processMessage();
 
-        } catch (Exception except) {
-
-            except.printStackTrace();
-
         } catch (Throwable throwable) {
-            throwable.printStackTrace();
+
+            System.out.println(throwable.getMessage());
+
         }
 
         return responseElement;
