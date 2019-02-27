@@ -86,6 +86,9 @@ public class UpdateImplementation {
     }
 
     private String getActionText() {
+
+
+        //return this.originalUpdateMessage.getFirstChildWithName(new QName("http://schemas.xmlsoap.org/soap/envelope/","Body")).getText();
         return this.originalUpdateMessage.getFirstChildWithName(new QName(SRWUpdateService.SRUNamespaces.zingSRWupdate.getValue(),"action")).getText();
     }
 
