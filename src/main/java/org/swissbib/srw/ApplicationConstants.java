@@ -41,7 +41,8 @@ public enum ApplicationConstants {
     TRANSFORM_RDF_TEMPLATE("transformRdfTemplate"),
     ACTIVE_MONGO_COLLECTION("activeMongoCollection"),
     PARSE_DELAYED_PROCESSING  ("PARSE.FOR.DELAYED.PROCESSING"),
-    PROCESSED_DELAYED_DIR ("processedDelayedDir");
+    PROCESSED_DELAYED_DIR ("processedDelayedDir"),
+    KAFKA_TOPIC ("KAFKA_TOPIC");
 
 
 

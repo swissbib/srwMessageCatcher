@@ -8,6 +8,7 @@ import org.apache.axis2.context.ConfigurationContext;
 import org.apache.axis2.description.AxisService;
 import org.apache.axis2.description.Parameter;
 import org.apache.axis2.engine.ServiceLifeCycle;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.bson.Document;
 
 import javax.xml.transform.Templates;
@@ -269,6 +270,15 @@ public class SRWUpdateServiceLifecyle implements ServiceLifeCycle {
 
 
             }
+
+            axisService.addParameter(new Parameter(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                    axisService.getParameter(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG).getValue().toString()));
+
+
+            axisService.addParameter(new Parameter(ApplicationConstants.KAFKA_TOPIC.getValue(),
+                    axisService.getParameter(ApplicationConstants.KAFKA_TOPIC.getValue()).getValue().toString()));
+
+
 
 
         } catch (AxisFault aF) {

@@ -5,6 +5,9 @@ import org.apache.axiom.om.*;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.description.Parameter;
 import org.bson.Document;
+import org.swissbib.srw.serialization.CBSDataConsumer;
+import org.swissbib.srw.serialization.KafkaConsumer;
+import org.swissbib.srw.serialization.PipeData;
 
 import javax.xml.namespace.QName;
 import javax.xml.transform.Result;
@@ -108,11 +111,14 @@ public class UpdateImplementation {
 
                     if (null != completeRecordOmElement) {
 
+                        KafkaConsumer kc = KafkaConsumer.createConsumer(mc);
+
+
                         this.checkRecordForDelayedProcessing(completeRecordOmElement);
                         if (pDeleteAction.matcher(actionText).find() ||
                                 (Boolean.valueOf(mc.getAxisService().getParameter(CHECK_LEADER_FOR_DELETE).getValue().toString())
                                         && checkLeaderForDelete(completeRecordOmElement))) {
-                            serializeRecord(completeRecordOmElement);
+                            serializeRecord(completeRecordOmElement, kc);
                             //we create a different responseElement for delete messages
                             //why? is this a commitment with OCLC (H.v.E) ??
                             responseElement = createDeleteResponse();
@@ -120,7 +126,7 @@ public class UpdateImplementation {
 
 
                             //for the swissbib classic procedure we serialize all the records into the updateDir
-                            serializeRecord(completeRecordOmElement);
+                            serializeRecord(completeRecordOmElement,kc);
                             responseElement = createUpdateReplaceResponse(completeRecordOmElement);
 
                         }
@@ -192,7 +198,7 @@ public class UpdateImplementation {
     }
 
 
-    private void serializeRecord (OMElement completeRecord) throws Exception {
+    private void serializeRecord (OMElement completeRecord, CBSDataConsumer dataconsumer) throws Exception {
 
 
 
@@ -228,11 +234,18 @@ public class UpdateImplementation {
             serializedRecord = new StringWriter().append(Normalizer.normalize(serializedRecord.toString(), Normalizer.Form.NFC));
         }
 
-        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream( getFileForSerialization()),"UTF-8"));
-        bw.write(serializedRecord.toString());
+        PipeData pd = new PipeData();
+        pd.action = PipeData.Action.create;
+        pd.body = serializedRecord.toString();
+        pd.id = this.recordId;
 
-        bw.flush();
-        bw.close();
+        dataconsumer.accept(pd);
+
+        //BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream( getFileForSerialization()),"UTF-8"));
+        //bw.write(serializedRecord.toString());
+
+        //bw.flush();
+        //bw.close();
 
 
     }

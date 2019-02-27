@@ -4,7 +4,7 @@
 buildscript {
     ext {
         mfVers = "5.0.1"
-        kotlin_version = "1.3.21"
+        kotlin_version = "1.3.11"
     }
 
     repositories {
@@ -22,15 +22,12 @@ buildscript {
 
 
 
-
-
 plugins {
     id 'java-library'
     //warum kann ich hier nicht $kotlin_version einsetzen??
-    id "org.jetbrains.kotlin.jvm" version  "$ext.kotlin_version"
+    id "org.jetbrains.kotlin.jvm" version  "1.3.11"
+    id 'war'
 }
-
-
 
 
 
@@ -69,10 +66,25 @@ dependencies {
 
 
 
+
     localDeps group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: "$kotlin_version"
     localDeps 'org.swissbib.linked:metafacture-kafka:2.0-gh'
     localDeps "org.mongodb:mongo-java-driver:3.10.1"
     localDeps group: 'org.apache.kafka', name: 'kafka-clients', version: '2.1.1'
+    localDeps group: 'org.metafacture', name: 'metafacture-io', version: "$mfVers"
+    localDeps "org.metafacture:metafacture-framework:${mfVers}"
+    localDeps group: 'org.apache.kafka', name: 'kafka_2.12', version: '2.1.1'
+
+//    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: "$kotlin_version"
+//    compile 'org.swissbib.linked:metafacture-kafka:2.0-gh'
+//    compile "org.mongodb:mongo-java-driver:3.10.1"
+//    compile group: 'org.apache.kafka', name: 'kafka-clients', version: '2.1.1'
+//    compile group: 'org.metafacture', name: 'metafacture-io', version: "$mfVers"
+//    compile "org.metafacture:metafacture-framework:${mfVers}"
+//    compile group: 'org.apache.kafka', name: 'kafka_2.12', version: '2.1.1'
+
+
+
 
 }
 
@@ -93,6 +105,11 @@ jar {
         from 'src/main/resources/org/swissbib/srw/createRecordForRDFPipeline.xslt'
     }
     archivesBaseName = 'SRWSearchDocumentsCatcher'
+
+    //manifest {
+    //    attributes(
+    //            "Class-Path": configurations.localDeps.collect { 'lib/' + it.getName() }.join(' '))
+    //}
 
 }
 

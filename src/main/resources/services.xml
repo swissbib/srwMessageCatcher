@@ -81,4 +81,8 @@
     first parameter indicates if this functionality is activated-->
     <parameter name="PARSE.FOR.DELAYED.PROCESSING">FALSE###datafield###035###a###NATIONALLICENCE</parameter>
 
+    <parameter name="bootstrap.servers">localhost:9092,localhost:9093,localhost:9094</parameter>
+    <parameter name="KAFKA_TOPIC">CBS_FREQUENT</parameter>
+
+
 </service>
