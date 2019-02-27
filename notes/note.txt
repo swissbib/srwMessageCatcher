@@ -114,6 +114,14 @@ Ich werde wohl unterschiedliche Formate für linked und classic brauchen. Jetzt 
  <mx:leader>     cam a22     1i 4500</mx:leader>
 
 
+ Kafka
+ $KAFKA_BASE1/bin/kafka-run-class.sh kafka.tools.GetOffsetShell --broker-list localhost:9092,localhost:9093,localhost:9094 --topic CBS_FREQUENT
+
+
+ $KAFKA_BASE1/bin/kafka-topics.sh --zookeeper $ZK_KAFKA  --create --topic CBS_FREQUENT --partitions 3 --replication-factor 1
+
+
+
 
 
 
